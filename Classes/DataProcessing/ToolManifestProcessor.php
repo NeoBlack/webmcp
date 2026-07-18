@@ -44,6 +44,7 @@ final class ToolManifestProcessor implements DataProcessorInterface
      * @param array<string, mixed> $contentObjectConfiguration
      * @param array<string, mixed> $processorConfiguration
      * @param array<string, mixed> $processedData
+     *
      * @return array<string, mixed>
      */
     public function process(
