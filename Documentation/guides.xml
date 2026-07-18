@@ -8,6 +8,6 @@
                project-issues="https://github.com/neoblack/webmcp/issues"
                edit-on-github="neoblack/webmcp"
                edit-on-github-branch="main"/>
-    <project title="WebMCP" version="0.1" release="0.1.0"
+    <project title="WebMCP" version="0.1" release="0.2.0"
              copyright="Since 2026 by Frank Nägler and contributors" />
 </guides>

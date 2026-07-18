@@ -17,6 +17,11 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   *(nothing yet)*
+
+0.2.0 - 2026-07-19
+==================
+
 *   **Breaking:** the backend module moved from the :guilabel:`Web` group to
     :guilabel:`System`, and its route identifier changed from ``web_webmcp`` to
     ``system_webmcp``. The module no longer carries a page tree — its statistics
