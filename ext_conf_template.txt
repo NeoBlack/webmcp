@@ -1,0 +1,5 @@
+# cat=analytics; type=boolean; label=Enable usage analytics: Log each WebMCP tool call (tool name + coarse client hint, no PII) to tx_neoblackwebmcp_event and expose the backend dashboard. Turn off to disable the ingest endpoint.
+analyticsEnabled = 1
+
+# cat=analytics; type=int+; label=Ingest rate limit: Maximum accepted ingest calls per client IP per minute (0 = unlimited). Protects the endpoint against flooding / stats pollution.
+analyticsRateLimit = 60

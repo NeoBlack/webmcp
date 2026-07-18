@@ -1,0 +1,143 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+
+<f:layout name="Module" />
+
+<f:section name="Content">
+
+    <style>
+        .wm-filters { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .wm-filter__group { display: flex; flex-direction: column; gap: .35rem; }
+        .wm-filter__label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+        .wm-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+        .wm-chip { display: inline-flex; padding: .2rem .7rem; border: 1px solid var(--typo3-component-border-color, #ccc);
+                   border-radius: 2rem; text-decoration: none; font-size: .85rem; color: inherit; }
+        .wm-chip.active { background: var(--typo3-component-primary-color, #0b57d0); border-color: transparent; color: #fff; }
+        .wm-kpis { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .wm-kpi { flex: 1 1 8rem; border: 1px solid var(--typo3-component-border-color, #ccc); border-radius: 6px; padding: .8rem 1rem; }
+        .wm-kpi__num { font-size: 1.8rem; font-weight: 700; line-height: 1.1; }
+        .wm-kpi__cap { font-size: .8rem; opacity: .7; }
+        .wm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (max-width: 60rem) { .wm-grid { grid-template-columns: 1fr; } }
+        .wm-card { border: 1px solid var(--typo3-component-border-color, #ccc); border-radius: 6px; padding: 1rem 1.2rem; }
+        .wm-card h3 { margin-top: 0; font-size: 1rem; }
+        .wm-bar-row { display: grid; grid-template-columns: 10rem 1fr 3rem; align-items: center; gap: .6rem; margin: .3rem 0; }
+        .wm-bar-label { font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wm-bar-track { background: rgba(127,127,127,.15); border-radius: 3px; height: 1.1rem; }
+        .wm-bar-fill { display: block; height: 100%; border-radius: 3px; background: var(--typo3-component-primary-color, #0b57d0); min-width: 2px; }
+        .wm-bar-count { text-align: right; font-variant-numeric: tabular-nums; font-size: .85rem; }
+        .wm-timeline { display: flex; align-items: flex-end; gap: 2px; height: 7rem; margin-top: .5rem; }
+        .wm-tl-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+        .wm-tl-fill { width: 100%; background: var(--typo3-component-primary-color, #0b57d0); border-radius: 2px 2px 0 0; min-height: 1px; }
+        .wm-tl-axis { display: flex; justify-content: space-between; font-size: .7rem; opacity: .6; margin-top: .25rem; }
+    </style>
+
+    <f:comment>--- Filter bar --------------------------------------------------</f:comment>
+    <div class="wm-filters">
+        <div class="wm-filter__group">
+            <span class="wm-filter__label"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.timeframe" /></span>
+            <div class="wm-chips">
+                <f:for each="{timeframes}" as="tfDays">
+                    <a class="wm-chip {f:if(condition: '{tfDays} == {current.days}', then: 'active')}"
+                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: current.client, days: tfDays})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:timeframe.days" arguments="{0: tfDays}" /></a>
+                </f:for>
+            </div>
+        </div>
+
+        <div class="wm-filter__group">
+            <span class="wm-filter__label"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.tool" /></span>
+            <div class="wm-chips">
+                <a class="wm-chip {f:if(condition: '{current.tool} == \'\'', then: 'active')}"
+                   href="{f:be.uri(route: 'web_webmcp', parameters: {tool: '', client: current.client, days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
+                <f:for each="{statistics.tools}" as="t">
+                    <a class="wm-chip {f:if(condition: '{current.tool} == {t}', then: 'active')}"
+                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: t, client: current.client, days: current.days})}">{t}</a>
+                </f:for>
+            </div>
+        </div>
+
+        <div class="wm-filter__group">
+            <span class="wm-filter__label"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.client" /></span>
+            <div class="wm-chips">
+                <a class="wm-chip {f:if(condition: '{current.client} == \'\'', then: 'active')}"
+                   href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: '', days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
+                <f:for each="{statistics.clients}" as="c">
+                    <a class="wm-chip {f:if(condition: '{current.client} == {c}', then: 'active')}"
+                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: c, days: current.days})}">{c}</a>
+                </f:for>
+            </div>
+        </div>
+    </div>
+
+    <f:if condition="{statistics.total} > 0">
+        <f:then>
+            <f:comment>--- KPIs ------------------------------------------------</f:comment>
+            <div class="wm-kpis">
+                <div class="wm-kpi"><div class="wm-kpi__num">{statistics.total}</div><div class="wm-kpi__cap"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:kpi.calls" /></div></div>
+                <div class="wm-kpi"><div class="wm-kpi__num">{statistics.perTool -> f:count()}</div><div class="wm-kpi__cap"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:kpi.distinctTools" /></div></div>
+                <div class="wm-kpi"><div class="wm-kpi__num">{statistics.perClient -> f:count()}</div><div class="wm-kpi__cap"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:kpi.distinctClients" /></div></div>
+            </div>
+
+            <div class="wm-grid">
+                <div class="wm-card">
+                    <h3><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:chart.perTool" /></h3>
+                    <f:for each="{statistics.perTool}" as="row">
+                        <div class="wm-bar-row">
+                            <span class="wm-bar-label" title="{row.label}">{row.label}</span>
+                            <span class="wm-bar-track"><span class="wm-bar-fill" style="width: {row.pct}%"></span></span>
+                            <span class="wm-bar-count">{row.count}</span>
+                        </div>
+                    </f:for>
+                </div>
+
+                <div class="wm-card">
+                    <h3><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:chart.perClient" /> <span style="font-weight:400;opacity:.6"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:chart.perClient.note" /></span></h3>
+                    <f:for each="{statistics.perClient}" as="row">
+                        <div class="wm-bar-row">
+                            <span class="wm-bar-label" title="{row.label}">{row.label}</span>
+                            <span class="wm-bar-track"><span class="wm-bar-fill" style="width: {row.pct}%"></span></span>
+                            <span class="wm-bar-count">{row.count}</span>
+                        </div>
+                    </f:for>
+                </div>
+            </div>
+
+            <div class="wm-card" style="margin-bottom:1.5rem;">
+                <h3><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:chart.timeline" /></h3>
+                <div class="wm-timeline">
+                    <f:for each="{statistics.perDay}" as="d">
+                        <span class="wm-tl-bar" title="{d.label}: {d.count}"><span class="wm-tl-fill" style="height: {d.pct}%"></span></span>
+                    </f:for>
+                </div>
+                <div class="wm-tl-axis">
+                    <span>{statistics.perDay.0.label}</span>
+                    <span><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:axis.today" /></span>
+                </div>
+            </div>
+
+            <f:comment>--- Recent events --------------------------------------</f:comment>
+            <div class="wm-card">
+                <h3><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:recent.title" /></h3>
+                <table class="table table-striped">
+                    <thead><tr>
+                        <th><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:table.time" /></th>
+                        <th><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:table.tool" /></th>
+                        <th><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:table.client" /></th>
+                    </tr></thead>
+                    <tbody>
+                        <f:for each="{statistics.recent}" as="e">
+                            <tr><td>{e.date}</td><td>{e.tool}</td><td>{e.client}</td></tr>
+                        </f:for>
+                    </tbody>
+                </table>
+            </div>
+        </f:then>
+        <f:else>
+            <f:be.infobox state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}"
+                          title="{f:translate(key: 'LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:empty.title')}"
+                          message="{f:translate(key: 'LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:empty.message')}" />
+        </f:else>
+    </f:if>
+
+</f:section>
+</html>

@@ -1,0 +1,38 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Neoblack\Webmcp\:
+    resource: '../Classes/*'
+
+  # The registry collects every service tagged 'webmcp.tool'. Tool providers get
+  # the tag automatically: the tag attribute sits on ToolProviderInterface, so
+  # any autoconfigured class implementing it is tagged — in this extension or in
+  # any site package, without further wiring.
+  Neoblack\Webmcp\Registry\ToolRegistry:
+    arguments:
+      $providers: !tagged_iterator webmcp.tool
+
+  # This extension's own cache (registered in ext_localconf.php), obtained via
+  # the CacheManager factory and injected into the rate limiter.
+  neoblack.webmcp.cache:
+    class: TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
+    factory: ['@TYPO3\CMS\Core\Cache\CacheManager', 'getCache']
+    arguments: ['neoblack_webmcp']
+
+  Neoblack\Webmcp\Security\RateLimiter:
+    arguments:
+      $cache: '@neoblack.webmcp.cache'
+
+  # DataProcessors are resolved from the container by the content object
+  # renderer, so they must be public.
+  Neoblack\Webmcp\DataProcessing\ToolManifestProcessor:
+    public: true
+
+  # Resolved from the container by the middleware dispatcher / module routing.
+  Neoblack\Webmcp\Middleware\EventMiddleware:
+    public: true
+  Neoblack\Webmcp\Controller\DashboardController:
+    public: true

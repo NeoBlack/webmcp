@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="en" datatype="plaintext" original="EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf" date="2026-07-18T00:00:00Z" product-name="neoblack_webmcp">
+        <header/>
+        <body>
+            <trans-unit id="filter.timeframe" resname="filter.timeframe">
+                <source>Timeframe</source>
+            </trans-unit>
+            <trans-unit id="filter.tool" resname="filter.tool">
+                <source>Tool</source>
+            </trans-unit>
+            <trans-unit id="filter.client" resname="filter.client">
+                <source>Client</source>
+            </trans-unit>
+            <trans-unit id="filter.all" resname="filter.all">
+                <source>All</source>
+            </trans-unit>
+            <trans-unit id="timeframe.days" resname="timeframe.days">
+                <source>%s days</source>
+            </trans-unit>
+            <trans-unit id="kpi.calls" resname="kpi.calls">
+                <source>Tool calls (timeframe)</source>
+            </trans-unit>
+            <trans-unit id="kpi.distinctTools" resname="kpi.distinctTools">
+                <source>distinct tools</source>
+            </trans-unit>
+            <trans-unit id="kpi.distinctClients" resname="kpi.distinctClients">
+                <source>distinct clients</source>
+            </trans-unit>
+            <trans-unit id="chart.perTool" resname="chart.perTool">
+                <source>Calls per tool</source>
+            </trans-unit>
+            <trans-unit id="chart.perClient" resname="chart.perClient">
+                <source>Calls per client</source>
+            </trans-unit>
+            <trans-unit id="chart.perClient.note" resname="chart.perClient.note">
+                <source>(self-reported / coarse)</source>
+            </trans-unit>
+            <trans-unit id="chart.timeline" resname="chart.timeline">
+                <source>Timeline (calls per day)</source>
+            </trans-unit>
+            <trans-unit id="axis.today" resname="axis.today">
+                <source>today</source>
+            </trans-unit>
+            <trans-unit id="recent.title" resname="recent.title">
+                <source>Recent calls</source>
+            </trans-unit>
+            <trans-unit id="table.time" resname="table.time">
+                <source>Time</source>
+            </trans-unit>
+            <trans-unit id="table.tool" resname="table.tool">
+                <source>Tool</source>
+            </trans-unit>
+            <trans-unit id="table.client" resname="table.client">
+                <source>Client</source>
+            </trans-unit>
+            <trans-unit id="empty.title" resname="empty.title">
+                <source>No data yet</source>
+            </trans-unit>
+            <trans-unit id="empty.message" resname="empty.message">
+                <source>No WebMCP tool calls have been recorded for the selected timeframe or filter yet.</source>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
