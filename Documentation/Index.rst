@@ -45,5 +45,10 @@ are included.
 
     Introduction/Index
     Installation/Index
+    Quickstart/Index
     Configuration/Index
     Developer/Index
+    Architecture/Index
+    Analytics/Index
+    Troubleshooting/Index
+    Changelog/Index

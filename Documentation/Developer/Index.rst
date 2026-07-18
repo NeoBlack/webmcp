@@ -148,9 +148,48 @@ the current line.
 Escape hatch
 ============
 
-If no primitive fits, leave ``data`` minimal and set ``moduleUrl`` to the URL of
-an ES module exporting ``execute(args, ctx)``. The runtime imports it on first
-call and delegates to it.
+If no primitive fits, leave ``primitive`` at any value, keep ``data`` minimal and
+set ``moduleUrl`` to the URL of an ES module exporting an ``execute`` function.
+The runtime imports the module lazily — on the tool's first call — and delegates
+to it. A ``moduleUrl`` is only used when no built-in primitive matches, so a
+custom module always wins the fallback, never overrides a primitive.
+
+The contract
+------------
+
+..  code-block:: javascript
+
+    // your-tool.js  (served same-origin, or CORS-enabled for dynamic import)
+    export function execute(args, ctx) {
+        // args: the tool arguments the agent passed, already normalised
+        //       (the runtime unwraps an { arguments: {…} } envelope for you).
+        //       Includes the optional `client` analytics hint if the agent set it.
+        //
+        // ctx:  { tool, config }
+        //   ctx.tool   – this tool's manifest object
+        //                { name, description, inputSchema, primitive, data, moduleUrl }
+        //   ctx.config – the whole page manifest { endpoint, tools: [...] }
+
+        // Return an MCP tool result. `content` is required; `structuredContent`
+        // is optional machine-readable output. You may return a Promise.
+        return {
+            content: [{ type: 'text', text: 'Done.' }],
+            structuredContent: { ok: true },
+        };
+    }
+
+Notes:
+
+*   **Analytics is already handled.** The runtime fires the usage beacon before
+    importing your module, so you do not call the endpoint yourself.
+*   **Keep ``data`` for your own config.** Anything the primitives don't use is
+    yours; read it from ``ctx.tool.data``.
+*   **Errors surface to the agent.** A thrown error or rejected Promise
+    propagates as the tool call's failure — return a normal result for the
+    "no match / unavailable" case instead of throwing.
+*   **Loading is best-effort and lazy.** The module is fetched only on first
+    call; a failed import means that one call fails, nothing else on the page is
+    affected.
 
 Analytics
 =========
@@ -158,4 +197,14 @@ Analytics
 Every tool call sends a same-origin beacon to the configured endpoint. The
 :php:`ToolRegistry::toolNames()` list (all registered providers) is the
 whitelist the ingest middleware validates against – it follows your tools
-automatically.
+automatically. For the recorded fields, retention and endpoint hardening see
+:ref:`analytics`.
+
+See also
+========
+
+*   :ref:`quickstart` – a full end-to-end example using the ``static`` primitive.
+*   :ref:`architecture` – how providers, the registry, the processor and the
+    runtime fit together.
+*   :ref:`analytics` – what the beacon records and how the ingest endpoint is
+    protected.

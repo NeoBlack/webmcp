@@ -3,8 +3,9 @@
 /vendor/
 /public/
 composer.lock
-packages
-var
+/Documentation-GENERATED-temp
+/packages
+/var
 .phpunit.cache/
 .phpunit.result.cache
 .php-cs-fixer.cache

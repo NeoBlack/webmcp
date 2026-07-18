@@ -9,6 +9,10 @@ Configuration
 Extension configuration
 ========================
 
+Set these in the TYPO3 backend under :guilabel:`Admin Tools > Settings >
+Extension Configuration > neoblack_webmcp` (the defaults live in
+:file:`ext_conf_template.txt`).
+
 ..  confval:: analyticsEnabled
     :type: boolean
     :Default: 1
@@ -96,7 +100,6 @@ Output the manifest once per page inside a ``<script>`` tag with the id
 Backend module
 ==============
 
-When analytics is enabled, the module :guilabel:`Web > WebMCP` shows calls per
-tool and client, a per-day timeline and the most recent events. The accepted
-tool names for the ingest endpoint are derived automatically from the
-registered providers.
+When analytics is enabled, the :guilabel:`System > WebMCP` module visualises tool
+usage. Its data model, retention and the hardening of the public ingest
+endpoint are described in :ref:`analytics`.
