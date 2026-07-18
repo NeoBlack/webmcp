@@ -8,11 +8,10 @@ use Neoblack\Webmcp\Controller\DashboardController;
  * Backend module "WebMCP" – evaluation of the WebMCP tool usage events.
  */
 return [
-    'web_webmcp' => [
-        'parent' => 'web',
-        'position' => ['after' => 'web_info'],
+    'system_webmcp' => [
+        'parent' => 'system',
         'access' => 'user',
-        'path' => '/module/web/webmcp',
+        'path' => '/module/system/webmcp',
         'iconIdentifier' => 'neoblack-webmcp-module',
         'labels' => 'LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang_mod.xlf',
         'routes' => [

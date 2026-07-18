@@ -39,7 +39,7 @@
             <div class="wm-chips">
                 <f:for each="{timeframes}" as="tfDays">
                     <a class="wm-chip {f:if(condition: '{tfDays} == {current.days}', then: 'active')}"
-                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: current.client, days: tfDays})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:timeframe.days" arguments="{0: tfDays}" /></a>
+                       href="{f:be.uri(route: 'system_webmcp', parameters: {tool: current.tool, client: current.client, days: tfDays})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:timeframe.days" arguments="{0: tfDays}" /></a>
                 </f:for>
             </div>
         </div>
@@ -48,10 +48,10 @@
             <span class="wm-filter__label"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.tool" /></span>
             <div class="wm-chips">
                 <a class="wm-chip {f:if(condition: '{current.tool} == \'\'', then: 'active')}"
-                   href="{f:be.uri(route: 'web_webmcp', parameters: {tool: '', client: current.client, days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
+                   href="{f:be.uri(route: 'system_webmcp', parameters: {tool: '', client: current.client, days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
                 <f:for each="{statistics.tools}" as="t">
                     <a class="wm-chip {f:if(condition: '{current.tool} == {t}', then: 'active')}"
-                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: t, client: current.client, days: current.days})}">{t}</a>
+                       href="{f:be.uri(route: 'system_webmcp', parameters: {tool: t, client: current.client, days: current.days})}">{t}</a>
                 </f:for>
             </div>
         </div>
@@ -60,10 +60,10 @@
             <span class="wm-filter__label"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.client" /></span>
             <div class="wm-chips">
                 <a class="wm-chip {f:if(condition: '{current.client} == \'\'', then: 'active')}"
-                   href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: '', days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
+                   href="{f:be.uri(route: 'system_webmcp', parameters: {tool: current.tool, client: '', days: current.days})}"><f:translate key="LLL:EXT:neoblack_webmcp/Resources/Private/Language/locallang.xlf:filter.all" /></a>
                 <f:for each="{statistics.clients}" as="c">
                     <a class="wm-chip {f:if(condition: '{current.client} == {c}', then: 'active')}"
-                       href="{f:be.uri(route: 'web_webmcp', parameters: {tool: current.tool, client: c, days: current.days})}">{c}</a>
+                       href="{f:be.uri(route: 'system_webmcp', parameters: {tool: current.tool, client: c, days: current.days})}">{c}</a>
                 </f:for>
             </div>
         </div>
