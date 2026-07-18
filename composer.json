@@ -13,6 +13,7 @@
         "agents"
     ],
     "require": {
+        "php": "^8.2",
         "typo3/cms-core": "^14.3",
         "typo3/cms-frontend": "^14.3"
     },
