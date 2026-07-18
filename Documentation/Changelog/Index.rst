@@ -17,7 +17,16 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
-*   Documentation: added a :ref:`quickstart`, an :ref:`architecture` overview,
+*   **Breaking:** the backend module moved from the :guilabel:`Web` group to
+    :guilabel:`System`, and its route identifier changed from ``web_webmcp`` to
+    ``system_webmcp``. The module no longer carries a page tree — its statistics
+    are site-wide. Update any backend user/group access rights and hardcoded
+    module links accordingly.
+*   **Changed:** the backend module icon was redrawn in the three-colour TYPO3
+    v14 icon style.
+*   **Added:** an ``ext_emconf.php`` so the extension can be published to and
+    installed from the TER.
+*   **Documentation:** added a :ref:`quickstart`, an :ref:`architecture` overview,
     a dedicated :ref:`analytics` chapter (data model, retention, endpoint
     hardening), a :ref:`troubleshooting` guide and this changelog.
 
