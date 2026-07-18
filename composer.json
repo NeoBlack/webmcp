@@ -4,7 +4,6 @@
     "description": "Declarative WebMCP tool framework for TYPO3: define agent tools server-side, expose them via document.modelContext, with optional first-party usage analytics.",
     "license": ["GPL-2.0-or-later"],
     "keywords": ["TYPO3 CMS", "WebMCP", "modelContext", "AI", "agents"],
-    "version": "0.1.0",
     "require": {
         "typo3/cms-core": "^14.3",
         "typo3/cms-frontend": "^14.3"
