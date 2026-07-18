@@ -28,15 +28,6 @@ WebMCP
 
 ----
 
-..  warning::
-
-    **Experimental.** This extension is experimental and not yet ready for
-    production use. It is built on top of
-    `WebMCP <https://github.com/webmachinelearning/webmcp>`__, which is itself
-    an experimental, early-stage proposal. Both the underlying specification
-    and this extension's API may change or break at any time without notice.
-    Use at your own risk.
-
 A declarative `WebMCP <https://github.com/webmachinelearning/webmcp>`__ tool
 framework for TYPO3. Define agent tools server-side as small PHP providers;
 the extension collects them into a per-page manifest and a generic JavaScript
