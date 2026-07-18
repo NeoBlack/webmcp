@@ -69,6 +69,8 @@ jobs:
           # here; drop it so core main can resolve.
           composer remove --dev --no-update \
             saschaegerer/phpstan-typo3 phpstan/phpstan phpstan/extension-installer typo3/coding-standards
+          # Only testing-framework dev-main supports core main (15.x-dev).
+          composer require --dev --no-update typo3/testing-framework:dev-main
 
       - name: Pin TYPO3 core version
         run: composer require --no-update typo3/cms-core:${{ matrix.typo3-version }} typo3/cms-frontend:${{ matrix.typo3-version }}
