@@ -1,0 +1,47 @@
+name: Publish
+
+# Triggered by the tag that Build/Scripts/release.sh pushes. Publishes the
+# extension to the TER and creates a GitHub release. Quality gates already ran
+# locally (release.sh) and on main (ci.yml), so this workflow only publishes.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # needed to create the GitHub release
+
+jobs:
+  publish:
+    name: Publish to TER
+    runs-on: ubuntu-latest
+    env:
+      TYPO3_EXTENSION_KEY: neoblack_webmcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version (strip leading "v")
+        id: version
+        run: echo "number=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up PHP with tailor
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, mbstring
+          coverage: none
+          tools: typo3/tailor
+
+      - name: Publish to TER
+        env:
+          TYPO3_API_TOKEN: ${{ secrets.TYPO3_API_TOKEN }}
+        run: >-
+          tailor ter:publish
+          --comment "Released via GitHub Actions from ${{ github.ref_name }}"
+          "${{ steps.version.outputs.number }}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" --generate-notes --verify-tag
