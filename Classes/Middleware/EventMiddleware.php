@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Middleware;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
@@ -43,11 +49,12 @@ final class EventMiddleware implements MiddlewareInterface
         private readonly EventRepository $repository,
         private readonly Context $context,
         private readonly RateLimiter $rateLimiter,
-    ) {}
+    ) {
+    }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getMethod() !== 'POST' || $request->getUri()->getPath() !== self::PATH) {
+        if ('POST' !== $request->getMethod() || self::PATH !== $request->getUri()->getPath()) {
             return $handler->handle($request);
         }
         if (!$this->analyticsEnabled()) {
@@ -57,7 +64,7 @@ final class EventMiddleware implements MiddlewareInterface
         // Same-origin guard: sendBeacon sets Sec-Fetch-Site; reject obvious
         // cross-site posts. Empty header (older clients) is tolerated.
         $fetchSite = $request->getHeaderLine('sec-fetch-site');
-        if ($fetchSite !== '' && $fetchSite !== 'same-origin' && $fetchSite !== 'same-site') {
+        if ('' !== $fetchSite && 'same-origin' !== $fetchSite && 'same-site' !== $fetchSite) {
             return $this->noContent();
         }
 
@@ -68,16 +75,17 @@ final class EventMiddleware implements MiddlewareInterface
             return $this->responseFactory->createResponse(429);
         }
 
-        $data = json_decode((string)$request->getBody(), true);
-        $tool = is_array($data) ? (string)($data['tool'] ?? '') : '';
+        $data = json_decode((string) $request->getBody(), true);
+        $tool = is_array($data) ? (string) ($data['tool'] ?? '') : '';
 
-        if ($tool !== '' && in_array($tool, $this->registry->toolNames(), true)) {
-            $now = (int)$this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
+        if ('' !== $tool && in_array($tool, $this->registry->toolNames(), true)) {
+            $now = (int) $this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
             $this->repository->log(
                 $tool,
-                $this->sanitizeClient(is_array($data) ? (string)($data['client'] ?? '') : ''),
+                $this->sanitizeClient(is_array($data) ? (string) ($data['client'] ?? '') : ''),
                 $now,
             );
+
             // The beacon does not read the response; 204 keeps it cheap.
             return $this->noContent();
         }
@@ -89,7 +97,7 @@ final class EventMiddleware implements MiddlewareInterface
     private function analyticsEnabled(): bool
     {
         try {
-            return (bool)($this->extensionConfiguration->get('neoblack_webmcp', 'analyticsEnabled') ?? true);
+            return (bool) ($this->extensionConfiguration->get('neoblack_webmcp', 'analyticsEnabled') ?? true);
         } catch (\Throwable) {
             return true;
         }
@@ -98,7 +106,7 @@ final class EventMiddleware implements MiddlewareInterface
     private function rateLimit(): int
     {
         try {
-            return (int)($this->extensionConfiguration->get('neoblack_webmcp', 'analyticsRateLimit') ?? 60);
+            return (int) ($this->extensionConfiguration->get('neoblack_webmcp', 'analyticsRateLimit') ?? 60);
         } catch (\Throwable) {
             return 60;
         }
@@ -111,10 +119,11 @@ final class EventMiddleware implements MiddlewareInterface
     private function sanitizeClient(string $client): string
     {
         $client = trim(preg_replace('/[^\p{L}\p{N} ._\-\/()]+/u', ' ', $client) ?? '');
-        $client = trim((string)preg_replace('/\s+/', ' ', $client));
-        if ($client === '') {
+        $client = trim((string) preg_replace('/\s+/', ' ', $client));
+        if ('' === $client) {
             return 'unbekannt';
         }
+
         return mb_substr($client, 0, 64);
     }
 

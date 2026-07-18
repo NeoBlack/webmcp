@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tests\Unit\Service;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
@@ -20,12 +26,12 @@ final class StatisticsServiceTest extends UnitTestCase
         $repository = $this->createStub(EventRepository::class);
         $repository->method('countSince')->willReturn(5);
         $repository->method('groupedCounts')->willReturnCallback(
-            static fn (string $column): array => $column === 'tool'
+            static fn (string $column): array => 'tool' === $column
                 ? [['label' => 'filter_blog', 'count' => 4], ['label' => 'search_articles', 'count' => 1]]
                 : [['label' => 'Claude', 'count' => 5]],
         );
         $repository->method('distinctValues')->willReturnCallback(
-            static fn (string $column): array => $column === 'tool'
+            static fn (string $column): array => 'tool' === $column
                 ? ['filter_blog', 'search_articles']
                 : ['Claude'],
         );

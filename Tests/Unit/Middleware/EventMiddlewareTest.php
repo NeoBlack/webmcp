@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tests\Unit\Middleware;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
@@ -14,13 +20,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Context\DateTimeAspect;
 use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Http\ResponseFactory;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Stream;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class EventMiddlewareTest extends UnitTestCase
@@ -127,8 +133,10 @@ final class EventMiddlewareTest extends UnitTestCase
     ): ResponseInterface {
         // Real registry with fake providers; toolNames() derives from provider names.
         $providers = array_map(
-            static fn (string $name): ToolProviderInterface => new class ($name) implements ToolProviderInterface {
-                public function __construct(private string $toolName) {}
+            static fn (string $name): ToolProviderInterface => new class($name) implements ToolProviderInterface {
+                public function __construct(private string $toolName)
+                {
+                }
 
                 public function name(): string
                 {
@@ -162,8 +170,10 @@ final class EventMiddlewareTest extends UnitTestCase
             $rateLimiter,
         );
 
-        $handler = new class (self::PASS_THROUGH) implements RequestHandlerInterface {
-            public function __construct(private int $status) {}
+        $handler = new class(self::PASS_THROUGH) implements RequestHandlerInterface {
+            public function __construct(private int $status)
+            {
+            }
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
@@ -181,8 +191,8 @@ final class EventMiddlewareTest extends UnitTestCase
     {
         // A writable stream for the body (the default php://input is read-only).
         $stream = new Stream('php://temp', 'wb+');
-        if ($body !== []) {
-            $stream->write((string)json_encode($body));
+        if ([] !== $body) {
+            $stream->write((string) json_encode($body));
             $stream->rewind();
         }
 

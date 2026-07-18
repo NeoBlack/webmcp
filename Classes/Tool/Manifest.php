@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tool;
 
 /**
@@ -18,9 +24,9 @@ namespace Neoblack\Webmcp\Tool;
 final class Manifest implements \JsonSerializable
 {
     /**
-     * @param array<string, mixed> $inputSchema JSON Schema for the tool arguments.
-     * @param array<string, mixed> $data Primitive-specific payload (options, index URL, …).
-     * @param string|null $moduleUrl Optional ES module URL providing a custom execute().
+     * @param array<string, mixed> $inputSchema JSON Schema for the tool arguments
+     * @param array<string, mixed> $data        primitive-specific payload (options, index URL, …)
+     * @param string|null          $moduleUrl   optional ES module URL providing a custom execute()
      */
     public function __construct(
         public readonly string $name,
@@ -29,7 +35,8 @@ final class Manifest implements \JsonSerializable
         public readonly Primitive $primitive,
         public readonly array $data = [],
         public readonly ?string $moduleUrl = null,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array<string, mixed>
@@ -39,11 +46,11 @@ final class Manifest implements \JsonSerializable
         $out = [
             'name' => $this->name,
             'description' => $this->description,
-            'inputSchema' => $this->inputSchema === [] ? new \stdClass() : $this->inputSchema,
+            'inputSchema' => [] === $this->inputSchema ? new \stdClass() : $this->inputSchema,
             'primitive' => $this->primitive->value,
-            'data' => $this->data === [] ? new \stdClass() : $this->data,
+            'data' => [] === $this->data ? new \stdClass() : $this->data,
         ];
-        if ($this->moduleUrl !== null) {
+        if (null !== $this->moduleUrl) {
             $out['moduleUrl'] = $this->moduleUrl;
         }
 

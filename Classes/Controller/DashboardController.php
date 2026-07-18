@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Controller;
 
 use Neoblack\Webmcp\Dto\Filter;
@@ -25,14 +31,15 @@ final class DashboardController
     public function __construct(
         private readonly ModuleTemplateFactory $moduleTemplateFactory,
         private readonly StatisticsService $statisticsService,
-    ) {}
+    ) {
+    }
 
     public function handleRequest(ServerRequestInterface $request): ResponseInterface
     {
         $params = $request->getQueryParams();
-        $tool = (string)($params['tool'] ?? '');
-        $client = (string)($params['client'] ?? '');
-        $days = (int)($params['days'] ?? self::DEFAULT_DAYS);
+        $tool = (string) ($params['tool'] ?? '');
+        $client = (string) ($params['client'] ?? '');
+        $days = (int) ($params['days'] ?? self::DEFAULT_DAYS);
         if (!in_array($days, self::TIMEFRAMES, true)) {
             $days = self::DEFAULT_DAYS;
         }

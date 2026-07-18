@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tests\Unit\DataProcessing;
 
 use Neoblack\Webmcp\DataProcessing\ToolManifestProcessor;
@@ -22,15 +28,17 @@ final class ToolManifestProcessorTest extends UnitTestCase
     {
         $evil = '</script><img src=x onerror=alert(document.cookie)>';
         $processor = new ToolManifestProcessor(new ToolRegistry([
-            new class ($evil) implements ToolProviderInterface {
-                public function __construct(private string $evil) {}
+            new class($evil) implements ToolProviderInterface {
+                public function __construct(private string $evil)
+                {
+                }
 
                 public function name(): string
                 {
                     return 'evil';
                 }
 
-                public function manifest(ContentObjectRenderer $cObj, array $processedData): ?Manifest
+                public function manifest(ContentObjectRenderer $cObj, array $processedData): Manifest
                 {
                     return new Manifest('evil', $this->evil, [], Primitive::StaticList, ['label' => $this->evil]);
                 }

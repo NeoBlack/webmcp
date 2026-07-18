@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Domain\Repository;
 
 use TYPO3\CMS\Core\Database\Connection;
@@ -19,7 +25,8 @@ class EventRepository
 
     public function __construct(
         private readonly ConnectionPool $connectionPool,
-    ) {}
+    ) {
+    }
 
     /**
      * Append one event. The timestamp is passed in so callers stay
@@ -40,7 +47,7 @@ class EventRepository
         $queryBuilder->count('uid')->from(self::TABLE);
         $this->constrain($queryBuilder, $since, $tool, $client);
 
-        return (int)$queryBuilder->executeQuery()->fetchOne();
+        return (int) $queryBuilder->executeQuery()->fetchOne();
     }
 
     /**
@@ -61,7 +68,7 @@ class EventRepository
 
         $rows = [];
         foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
-            $rows[] = ['label' => (string)$row['label'], 'count' => (int)$row['cnt']];
+            $rows[] = ['label' => (string) $row['label'], 'count' => (int) $row['cnt']];
         }
 
         return $rows;
@@ -118,9 +125,9 @@ class EventRepository
         $rows = [];
         foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
             $rows[] = [
-                'tool' => (string)$row['tool'],
-                'client' => (string)$row['client'],
-                'crdate' => (int)$row['crdate'],
+                'tool' => (string) $row['tool'],
+                'client' => (string) $row['client'],
+                'crdate' => (int) $row['crdate'],
             ];
         }
 
@@ -132,10 +139,10 @@ class EventRepository
         $queryBuilder->where(
             $queryBuilder->expr()->gte('crdate', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
         );
-        if ($tool !== '') {
+        if ('' !== $tool) {
             $queryBuilder->andWhere($queryBuilder->expr()->eq('tool', $queryBuilder->createNamedParameter($tool)));
         }
-        if ($client !== '') {
+        if ('' !== $client) {
             $queryBuilder->andWhere($queryBuilder->expr()->eq('client', $queryBuilder->createNamedParameter($client)));
         }
     }

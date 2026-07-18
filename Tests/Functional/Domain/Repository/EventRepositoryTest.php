@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tests\Functional\Domain\Repository;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
@@ -15,7 +21,6 @@ final class EventRepositoryTest extends FunctionalTestCase
 
     /** Needed so the container can resolve the (public) DashboardController -> ModuleTemplateFactory. */
     protected array $coreExtensionsToLoad = ['backend'];
-
     private EventRepository $subject;
 
     protected function setUp(): void
@@ -32,7 +37,7 @@ final class EventRepositoryTest extends FunctionalTestCase
         self::assertCount(1, $rows);
         self::assertSame('filter_blog', $rows[0]['tool']);
         self::assertSame('Claude', $rows[0]['client']);
-        self::assertSame(1700000000, (int)$rows[0]['crdate']);
+        self::assertSame(1700000000, (int) $rows[0]['crdate']);
     }
 
     public function testCountSinceRespectsWindowAndFilters(): void

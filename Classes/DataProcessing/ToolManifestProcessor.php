@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\DataProcessing;
 
 use Neoblack\Webmcp\Registry\ToolRegistry;
@@ -31,26 +37,34 @@ final class ToolManifestProcessor implements DataProcessorInterface
 {
     public function __construct(
         private readonly ToolRegistry $registry,
-    ) {}
+    ) {
+    }
 
+    /**
+     * @param array<string, mixed> $contentObjectConfiguration
+     * @param array<string, mixed> $processorConfiguration
+     * @param array<string, mixed> $processedData
+     * @return array<string, mixed>
+     */
     public function process(
         ContentObjectRenderer $cObj,
         array $contentObjectConfiguration,
         array $processorConfiguration,
         array $processedData,
     ): array {
-        $as = (string)($processorConfiguration['as'] ?? 'webmcpConfigJson');
+        $as = (string) ($processorConfiguration['as'] ?? 'webmcpConfigJson');
 
         $tools = $this->registry->collect($cObj, $processedData);
-        if ($tools === []) {
+        if ([] === $tools) {
             $processedData[$as] = '';
+
             return $processedData;
         }
 
-        $endpoint = trim((string)$cObj->stdWrapValue('endpoint', $processorConfiguration));
+        $endpoint = trim((string) $cObj->stdWrapValue('endpoint', $processorConfiguration));
 
         $payload = [
-            'endpoint' => $endpoint !== '' ? $endpoint : '/webmcp-event',
+            'endpoint' => '' !== $endpoint ? $endpoint : '/webmcp-event',
             'tools' => $tools,
         ];
 

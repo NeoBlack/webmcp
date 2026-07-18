@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Security;
 
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
@@ -24,7 +30,8 @@ class RateLimiter
     public function __construct(
         private readonly FrontendInterface $cache,
         private readonly Context $context,
-    ) {}
+    ) {
+    }
 
     /**
      * Returns true if another call from $clientId is allowed. A $limit of 0 (or
@@ -36,11 +43,11 @@ class RateLimiter
             return true;
         }
 
-        $now = (int)$this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
+        $now = (int) $this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
         $window = intdiv($now, self::WINDOW_SECONDS);
         $identifier = 'rl_' . sha1($clientId . '|' . $window);
 
-        $count = (int)$this->cache->get($identifier);
+        $count = (int) $this->cache->get($identifier);
         if ($count >= $limit) {
             return false;
         }

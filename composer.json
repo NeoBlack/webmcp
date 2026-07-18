@@ -1,20 +1,27 @@
 {
     "name": "neoblack/webmcp",
-    "type": "typo3-cms-extension",
     "description": "Declarative WebMCP tool framework for TYPO3: define agent tools server-side, expose them via document.modelContext, with optional first-party usage analytics.",
-    "license": ["GPL-2.0-or-later"],
-    "keywords": ["TYPO3 CMS", "WebMCP", "modelContext", "AI", "agents"],
+    "license": [
+        "GPL-2.0-or-later"
+    ],
+    "type": "typo3-cms-extension",
+    "keywords": [
+        "TYPO3 CMS",
+        "WebMCP",
+        "modelContext",
+        "AI",
+        "agents"
+    ],
     "require": {
         "typo3/cms-core": "^14.3",
         "typo3/cms-frontend": "^14.3"
     },
     "require-dev": {
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "saschaegerer/phpstan-typo3": "^3.0",
+        "typo3/coding-standards": "^0.8",
         "typo3/testing-framework": "^9.5"
-    },
-    "extra": {
-        "typo3/cms": {
-            "extension-key": "neoblack_webmcp"
-        }
     },
     "autoload": {
         "psr-4": {
@@ -25,5 +32,29 @@
         "psr-4": {
             "Neoblack\\Webmcp\\Tests\\": "Tests/"
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "typo3/cms-composer-installers": true,
+            "typo3/class-alias-loader": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "neoblack_webmcp"
+        }
+    },
+    "scripts": {
+        "cs:check": "php-cs-fixer fix --config Build/php-cs-fixer/php-cs-fixer.php --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix --config Build/php-cs-fixer/php-cs-fixer.php",
+        "phpstan": "phpstan analyse -c Build/phpstan/phpstan.neon --memory-limit=-1",
+        "phpstan:baseline": "phpstan analyse -c Build/phpstan/phpstan.neon --memory-limit=-1 --generate-baseline Build/phpstan/phpstan-baseline.neon",
+        "test": [
+            "@test:unit",
+            "@test:functional"
+        ],
+        "test:functional": "phpunit -c Build/phpunit/FunctionalTests.xml",
+        "test:unit": "phpunit -c Build/phpunit/UnitTests.xml"
     }
 }

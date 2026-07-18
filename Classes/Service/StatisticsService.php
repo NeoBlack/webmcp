@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Service;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
@@ -22,11 +28,12 @@ final class StatisticsService
     public function __construct(
         private readonly EventRepository $repository,
         private readonly Context $context,
-    ) {}
+    ) {
+    }
 
     public function collect(Filter $filter): Statistics
     {
-        $now = (int)$this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
+        $now = (int) $this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
         $since = $now - $filter->days * 86400;
 
         return new Statistics(
@@ -44,6 +51,7 @@ final class StatisticsService
      * Add a percentage (of the largest count) to grouped rows for the bars.
      *
      * @param list<array{label: string, count: int}> $rows
+     *
      * @return list<array{label: string, count: int, pct: int}>
      */
     private function withPercentage(array $rows): array
@@ -54,7 +62,7 @@ final class StatisticsService
         }
 
         return array_map(
-            static fn (array $row): array => $row + ['pct' => $max > 0 ? (int)round($row['count'] / $max * 100) : 0],
+            static fn (array $row): array => $row + ['pct' => $max > 0 ? (int) round($row['count'] / $max * 100) : 0],
             $rows,
         );
     }
@@ -68,23 +76,23 @@ final class StatisticsService
     private function buildTimeline(int $since, int $days, string $tool, string $client, int $now): array
     {
         $buckets = [];
-        for ($i = $days - 1; $i >= 0; $i--) {
+        for ($i = $days - 1; $i >= 0; --$i) {
             $buckets[date('Y-m-d', $now - $i * 86400)] = 0;
         }
         foreach ($this->repository->timestampsSince($since, $tool, $client) as $timestamp) {
             $key = date('Y-m-d', $timestamp);
             if (isset($buckets[$key])) {
-                $buckets[$key]++;
+                ++$buckets[$key];
             }
         }
 
-        $max = $buckets === [] ? 0 : max($buckets);
+        $max = [] === $buckets ? 0 : max($buckets);
         $series = [];
         foreach ($buckets as $day => $count) {
             $series[] = [
-                'label' => date('d.m.', (int)strtotime($day)),
+                'label' => date('d.m.', (int) strtotime($day)),
                 'count' => $count,
-                'pct' => $max > 0 ? (int)round($count / $max * 100) : 0,
+                'pct' => $max > 0 ? (int) round($count / $max * 100) : 0,
             ];
         }
 
@@ -93,6 +101,7 @@ final class StatisticsService
 
     /**
      * @param list<array{tool: string, client: string, crdate: int}> $events
+     *
      * @return list<array{tool: string, client: string, date: string}>
      */
     private function formatRecent(array $events): array

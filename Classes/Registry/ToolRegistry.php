@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Registry;
 
 use Neoblack\Webmcp\Tool\Manifest;
@@ -20,10 +26,12 @@ final class ToolRegistry
      */
     public function __construct(
         private readonly iterable $providers,
-    ) {}
+    ) {
+    }
 
     /**
      * @param array<string, mixed> $processedData results of preceding DataProcessors
+     *
      * @return list<Manifest>
      */
     public function collect(ContentObjectRenderer $cObj, array $processedData): array
@@ -31,7 +39,7 @@ final class ToolRegistry
         $manifests = [];
         foreach ($this->providers as $provider) {
             $manifest = $provider->manifest($cObj, $processedData);
-            if ($manifest !== null) {
+            if (null !== $manifest) {
                 $manifests[] = $manifest;
             }
         }

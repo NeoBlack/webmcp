@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Tests\Unit\Tool;
 
 use Neoblack\Webmcp\Tool\Manifest;
@@ -44,6 +50,6 @@ final class ManifestTest extends UnitTestCase
     {
         $manifest = new Manifest('navigate_to_topic', 'd', ['type' => 'object'], Primitive::Navigate, ['param' => 'x']);
 
-        self::assertJson((string)json_encode($manifest));
+        self::assertJson((string) json_encode($manifest));
     }
 }

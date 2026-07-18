@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the package neoblack/webmcp.
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 namespace Neoblack\Webmcp\Dto;
 
 /**
@@ -13,10 +19,10 @@ namespace Neoblack\Webmcp\Dto;
 final class Statistics
 {
     /**
-     * @param list<Bar> $perTool
-     * @param list<Bar> $perClient
-     * @param list<Bar> $perDay
-     * @param list<Event> $recent
+     * @param list<Bar>    $perTool
+     * @param list<Bar>    $perClient
+     * @param list<Bar>    $perDay
+     * @param list<Event>  $recent
      * @param list<string> $tools
      * @param list<string> $clients
      */
@@ -28,5 +34,6 @@ final class Statistics
         public readonly array $recent,
         public readonly array $tools,
         public readonly array $clients,
-    ) {}
+    ) {
+    }
 }
