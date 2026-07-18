@@ -43,7 +43,10 @@
     },
     "extra": {
         "typo3/cms": {
-            "extension-key": "neoblack_webmcp"
+            "extension-key": "neoblack_webmcp",
+            "Package": {
+                "providesPackages": {}
+            }
         }
     },
     "scripts": {
