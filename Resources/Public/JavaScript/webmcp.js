@@ -39,10 +39,12 @@
     };
 
     // Fill {placeholders} from an object; {n} yields the passed 1-based index.
+    // Only own properties are read, so a {constructor}/{__proto__}/{toString}
+    // placeholder resolves to '' instead of leaking a prototype-chain value.
     var fill = function (tpl, obj, n) {
         return (tpl || '').replace(/\{(\w+)\}/g, function (_, key) {
             if (key === 'n' && n !== undefined) { return String(n); }
-            var v = obj ? obj[key] : undefined;
+            var v = (obj && Object.prototype.hasOwnProperty.call(obj, key)) ? obj[key] : undefined;
             return (v === undefined || v === null) ? '' : String(v);
         });
     };
