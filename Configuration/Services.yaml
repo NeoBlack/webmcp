@@ -6,6 +6,12 @@ services:
 
   Neoblack\Webmcp\:
     resource: '../Classes/*'
+    # These depend on EXT:form classes at container-build time (an event listener
+    # typed against a form event, and the persistence-manager decorator). EXT:form
+    # is only a suggestion, so they are registered conditionally in Services.php.
+    exclude:
+      - '../Classes/Form/RegisterWebMcpForm.php'
+      - '../Classes/Form/WebMcpAwareFormPersistenceManager.php'
 
   # The registry collects every service tagged 'webmcp.tool'. Tool providers get
   # the tag automatically: the tag attribute sits on ToolProviderInterface, so
@@ -34,5 +40,12 @@ services:
   # Resolved from the container by the middleware dispatcher / module routing.
   Neoblack\Webmcp\Middleware\EventMiddleware:
     public: true
+  Neoblack\Webmcp\Middleware\FormSubmitMiddleware:
+    public: true
   Neoblack\Webmcp\Controller\DashboardController:
     public: true
+
+  # The submit endpoint depends only on this seam; the concrete service isolates
+  # all of EXT:form's @internal API. Safe to register unconditionally — it has no
+  # EXT:form types in its constructor or signatures and guards its runtime use.
+  Neoblack\Webmcp\Form\FormSubmissionServiceInterface: '@Neoblack\Webmcp\Form\FormSubmissionService'

@@ -78,6 +78,11 @@ Getting started
         Extension settings and how to wire the manifest, JSON block and runtime
         into your site.
 
+    ..  card:: :ref:`📝 EXT:form bridge <form>`
+
+        Expose a TYPO3 form as a WebMCP tool: supported field types, the strict
+        refusal policy and the experimental server-side submission.
+
     ..  card:: :ref:`🧭 Architecture <architecture>`
 
         The two request flows — emitting tools and ingesting usage events — and
@@ -103,6 +108,7 @@ Getting started
     Quickstart/Index
     Configuration/Index
     Developer/Index
+    Form/Index
     Architecture/Index
     Analytics/Index
     Troubleshooting/Index
