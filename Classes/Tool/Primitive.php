@@ -43,4 +43,17 @@ enum Primitive: string
             self::Navigate, self::Mailto => false,
         };
     }
+
+    /**
+     * Whether the primitive's output may contain untrusted, third-party data that
+     * the agent should treat with caution (prompt-injection defence). search
+     * returns items from a JSON index that can hold user-generated content, so its
+     * output is untrusted; static is curated, and navigate/mailto only ever return
+     * messages this runtime built itself. Surfaced to the agent as the WebMCP
+     * ``untrustedContentHint`` annotation.
+     */
+    public function hasUntrustedOutput(): bool
+    {
+        return self::Search === $this;
+    }
 }

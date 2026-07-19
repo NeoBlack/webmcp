@@ -17,6 +17,11 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Added:** each manifest now also carries the WebMCP
+    ``annotations.untrustedContentHint`` flag, warning the agent that a tool's
+    output may contain untrusted third-party data. It is derived from the primitive
+    (only ``search`` is flagged) and overridable via the new ``untrustedContent``
+    argument on :php:`Manifest`.
 *   **Added:** :php:`Manifest` gained an optional ``title`` argument — a
     human-readable label for UI display, distinct from the machine-stable
     ``name``. It is emitted into the manifest and forwarded to the tool descriptor

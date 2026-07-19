@@ -46,6 +46,24 @@ final class ManifestTest extends UnitTestCase
         self::assertFalse($json['annotations']['readOnlyHint']);
     }
 
+    public function testDerivesUntrustedContentHintFromPrimitive(): void
+    {
+        // search returns third-party index data (untrusted); static is curated.
+        $search = (new Manifest('s', 'd', [], Primitive::Search))->jsonSerialize();
+        $static = (new Manifest('l', 'd', [], Primitive::StaticList))->jsonSerialize();
+
+        self::assertTrue($search['annotations']['untrustedContentHint']);
+        self::assertFalse($static['annotations']['untrustedContentHint']);
+    }
+
+    public function testExplicitUntrustedContentOverridesPrimitiveDefault(): void
+    {
+        // A static list assembled from user-supplied data can opt into the hint.
+        $json = (new Manifest('l', 'd', [], Primitive::StaticList, [], null, null, null, true))->jsonSerialize();
+
+        self::assertTrue($json['annotations']['untrustedContentHint']);
+    }
+
     public function testOmitsTitleWhenNull(): void
     {
         $json = (new Manifest('greet', 'desc', [], Primitive::StaticList))->jsonSerialize();

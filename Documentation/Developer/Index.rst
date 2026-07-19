@@ -99,6 +99,10 @@ Construct it with named arguments:
         -   ``?string``
         -   Optional human-readable label for UI display. The machine-stable
             ``name`` is used when omitted.
+    *   -   ``untrustedContent``
+        -   ``?bool``
+        -   Override the untrusted-content hint. ``null`` (default) derives it from
+            the primitive; see below.
 
 ..  note::
 
@@ -118,6 +122,20 @@ The value is derived from the primitive: ``search`` and ``static`` are read-only
 are not. Pass ``readOnly: true``/``false`` explicitly to override the default — for
 example when an escape-hatch module built on the ``search`` primitive actually
 mutates state.
+
+Untrusted-content hint
+======================
+
+The manifest also carries a WebMCP ``annotations.untrustedContentHint`` flag. It
+tells the agent that the tool's *output* may contain untrusted, third-party data
+that should be treated with caution — a prompt-injection defence.
+
+It is derived from the primitive: only ``search`` is flagged, because its results
+come from a JSON index that can hold user-generated content. ``static`` is curated,
+and ``navigate`` / ``mailto`` only return messages the runtime built itself, so all
+three default to ``false``. Pass ``untrustedContent: true``/``false`` to override —
+for instance when a ``static`` list is assembled from user-supplied data, or an
+escape-hatch module returns third-party content.
 
 Primitives
 ==========
