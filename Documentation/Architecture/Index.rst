@@ -16,25 +16,24 @@ and **ingesting usage events** at call time. They share only the tool registry.
 Emitting tools (frontend render)
 ================================
 
-..  code-block:: text
-    :caption: Flow — from PHP provider to registered agent tool
+..  uml::
+    :caption: Emitting tools — from PHP provider to registered agent tool
 
-    ToolProvider(s)                 one small PHP class per tool
-        │  manifest($cObj, $processedData)  → Manifest | null
-        ▼
-    ToolRegistry::collect()         drops providers that return null
-        │  list<Manifest>
-        ▼
-    ToolManifestProcessor           TYPO3 data processor
-        │  JSON: { endpoint, tools:[…] }   (JSON_HEX_* escaped)
-        ▼
-    <script id="webmcp-config">     rendered once per page by your template
-        │
-        ▼
-    webmcp.js runtime               reads the block, feature-detects ModelContext
-        │  per tool: picks the primitive interpreter (or imports moduleUrl)
-        ▼
-    document.modelContext.registerTool()   agent can now discover & call the tool
+    participant "Tool provider" as TP
+    participant "ToolRegistry" as TR
+    participant "ToolManifestProcessor" as TMP
+    participant "Page HTML" as PG
+    participant "webmcp.js" as RT
+    participant "ModelContext" as MC
+
+    TP -> TR : manifest($cObj, $processedData)
+    note right of TR : providers returning\nnull are dropped
+    TR -> TMP : list of Manifest
+    TMP -> PG : JSON block\n(JSON_HEX_* escaped)
+    PG -> RT : read #webmcp-config
+    note right of RT : per tool: primitive\ninterpreter or moduleUrl
+    RT -> MC : registerTool()
+    MC --> RT : tool discoverable & callable
 
 ..  list-table:: Key classes
     :header-rows: 1
@@ -60,21 +59,34 @@ Emitting tools (frontend render)
 Ingesting usage events (call time)
 ==================================
 
-..  code-block:: text
-    :caption: Flow — from tool call to backend dashboard
+..  uml::
+    :caption: Ingesting usage events — from tool call to backend dashboard
 
-    webmcp.js  ──POST /webmcp-event──►  EventMiddleware
-      navigator.sendBeacon                 │  same-origin guard (Sec-Fetch-Site)
-      { tool, client }                     │  RateLimiter::allow(ip, limit)
-                                           │  tool ∈ ToolRegistry::toolNames() ?
-                                           ▼
-                                     EventRepository::log(tool, client, ts)
-                                           │
-                                           ▼
-                                  tx_neoblackwebmcp_event  (append-only)
+    actor "Agent on page" as P
+    participant "webmcp.js" as JS
+    participant "EventMiddleware" as MW
+    participant "RateLimiter" as RL
+    participant "ToolRegistry" as TR
+    database "tx_neoblackwebmcp_event" as DB
 
-    Backend:  DashboardController ──► StatisticsService ──► EventRepository
-              (System > WebMCP module)     aggregates by tool / client / day
+    P -> JS : tool call
+    JS -> MW : POST /webmcp-event\nsendBeacon { tool, client }
+    MW -> MW : same-origin guard\n(Sec-Fetch-Site)
+    MW -> RL : allow(ip, limit)?
+    MW -> TR : tool in toolNames()?
+    MW -> DB : log(tool, client, ts)
+
+    == Backend module ==
+
+    actor "Editor" as ED
+    participant "DashboardController" as DC
+    participant "StatisticsService" as SS
+    participant "EventRepository" as ER
+
+    ED -> DC : open System > WebMCP
+    DC -> SS : collect(filter)
+    SS -> ER : aggregate by tool / client / day
+    ER -> DB : SELECT
 
 ..  list-table:: Key classes
     :header-rows: 1

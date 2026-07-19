@@ -15,6 +15,28 @@ WebMCP exposes page-scoped *tools* to AI agents through the browser's
 the page can discover these tools and call them – for example to search content,
 navigate to a section, or open a pre-filled contact e-mail.
 
+..  uml::
+    :caption: Where WebMCP sits — agent, browser and your TYPO3 site
+
+    actor "AI agent" as Agent
+
+    package "Browser" {
+      component "ModelContext" as MC
+      component "webmcp.js\nruntime" as RT
+      component "Registered\npage tools" as Tools
+    }
+
+    package "TYPO3 site" {
+      component "Tool providers\n(PHP)" as TP
+      component "Manifest\n(JSON in page)" as MF
+    }
+
+    Agent -> MC : discover & call
+    MC -> RT
+    RT -> Tools : register
+    TP -> MF : declare (server-side)
+    MF ..> RT : delivered in page HTML
+
 ..  seealso::
 
     The `WebMCP proposal <https://github.com/webmachinelearning/webmcp>`__ of the
@@ -82,6 +104,25 @@ Feature detection & progressive enhancement
 Everything degrades gracefully: without a ``ModelContext`` implementation,
 without configuration, or with a malformed manifest, nothing is registered and
 regular visitors are unaffected.
+
+..  uml::
+    :caption: Feature detection — nothing is registered without a ModelContext
+
+    start
+    if (config block present and valid?) then (no)
+      :nothing registered;
+      stop
+    endif
+    if (document.modelContext available?) then (yes)
+      :use document.modelContext;
+    elseif (navigator.modelContext available?) then (yes)
+      :use navigator.modelContext\n(Chrome origin trial);
+    else (neither)
+      :nothing registered;
+      stop
+    endif
+    :register each tool;
+    stop
 
 ..  warning::
 

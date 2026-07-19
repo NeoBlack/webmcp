@@ -159,6 +159,21 @@ Every tool maps to exactly one primitive. The generic runtime interprets the
             (``output => source`` rename); omit it to pass items through
             unchanged.
 
+        ..  uml::
+            :caption: How the search primitive resolves a query
+
+            actor Agent
+            participant "webmcp.js" as RT
+            participant "JSON index\n(same-origin)" as IDX
+
+            Agent -> RT : call with query + limit
+            RT -> RT : send analytics beacon
+            RT -> IDX : fetch indexUrl\n(cached per page)
+            IDX --> RT : items
+            RT -> RT : filter by searchFields\n(all query terms must match)
+            RT -> RT : slice to limit,\nproject resultFields
+            RT --> Agent : text + structuredContent (hits)
+
     ..  group-tab:: mailto
 
         Build a pre-filled ``mailto:`` link and open it. No server storage.
@@ -207,6 +222,21 @@ set ``moduleUrl`` to the URL of an ES module exporting an ``execute`` function.
 The runtime imports the module lazily — on the tool's first call — and delegates
 to it. A ``moduleUrl`` is only used when no built-in primitive matches, so a
 custom module always wins the fallback, never overrides a primitive.
+
+..  uml::
+    :caption: Escape hatch — a custom module loads lazily on first call
+
+    actor Agent
+    participant "webmcp.js" as RT
+    participant "your-tool.js\n(ES module)" as MOD
+
+    Agent -> RT : first tool call
+    RT -> RT : send analytics beacon
+    RT -> MOD : import(moduleUrl)\n(once, then cached)
+    MOD --> RT : { execute }
+    RT -> MOD : execute(args, ctx)
+    MOD --> RT : MCP result\n(content, structuredContent)
+    RT --> Agent : result
 
 The contract
 ------------
