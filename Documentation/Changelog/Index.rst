@@ -17,6 +17,11 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Added:** the ``navigate`` and ``mailto`` primitives accept an optional
+    ``confirm`` message that triggers a human-in-the-loop confirmation before the
+    side effect runs, via the WebMCP client's ``requestUserInteraction()`` (with a
+    ``confirm()`` fallback). Escape-hatch modules now receive the client as
+    ``ctx.client``. Without a ``confirm`` message the behaviour is unchanged.
 *   **Changed:** the built-in primitives now flag genuine failure paths
     (``navigate`` with an unknown option, ``mailto`` with no configured contact)
     with the WebMCP ``isError`` result flag, so agents can tell a failed call from

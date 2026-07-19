@@ -123,13 +123,28 @@
     // but valid search result is a success, not an error.
     var errorResult = function (text) { return { content: [{ type: 'text', text: text }], isError: true }; };
 
+    // Human-in-the-loop confirmation before a side effect (navigate, mailto).
+    // Opt-in: only asks when the tool configured a `confirm` message. Prefers the
+    // WebMCP client's requestUserInteraction() — which lets the agent surface the
+    // page to the user first — and falls back to a plain confirm() when the client
+    // does not provide it. Returns a Promise<boolean>: true means proceed.
+    var confirmSideEffect = function (mcClient, message) {
+        if (!message) { return Promise.resolve(true); }
+        var ask = function () { return window.confirm(message); };
+        if (mcClient && typeof mcClient.requestUserInteraction === 'function') {
+            return Promise.resolve(mcClient.requestUserInteraction(ask)).then(function (r) { return r !== false; });
+        }
+        return Promise.resolve(ask());
+    };
+
     // ---- primitive interpreters -----------------------------------------
     // Each returns an execute() closure for the given tool manifest.
 
     var primitives = {
 
         // Navigate the browser to a URL chosen from a fixed option set.
-        // data: { param, options:[{match,label,url}], messages:{success,unknown} }
+        // data: { param, options:[{match,label,url}], confirm,
+        //         messages:{success,unknown,cancelled} }
         navigate: function (tool) {
             var d = tool.data || {};
             var param = d.param || 'value';
@@ -137,7 +152,7 @@
             var byMatch = {};
             options.forEach(function (o) { byMatch[o.match] = o; });
             var msgs = d.messages || {};
-            return function (input) {
+            return function (input, mcClient) {
                 var p = normalizeArgs(input);
                 track(tool.name, detectClient(p));
                 var opt = byMatch[p[param]];
@@ -146,8 +161,11 @@
                     return errorResult(msgs.unknown ? fill(msgs.unknown, { options: avail })
                         : 'Unknown option. Available: ' + avail + '.');
                 }
-                window.location.href = opt.url;
-                return textResult(msgs.success ? fill(msgs.success, opt) : 'Navigating to "' + opt.label + '".');
+                return confirmSideEffect(mcClient, d.confirm ? fill(d.confirm, opt) : '').then(function (ok) {
+                    if (!ok) { return errorResult(msgs.cancelled ? fill(msgs.cancelled, opt) : 'Cancelled.'); }
+                    window.location.href = opt.url;
+                    return textResult(msgs.success ? fill(msgs.success, opt) : 'Navigating to "' + opt.label + '".');
+                });
             };
         },
 
@@ -205,12 +223,12 @@
 
         // Build a pre-filled mailto: link and open it. No server storage.
         // data: { to(base64), subjectTemplate, bodyLines:[{label,param,optional}],
-        //         messageParam, successTemplate }
+        //         messageParam, successTemplate, confirm }
         mailto: function (tool) {
             var d = tool.data || {};
             var to = '';
             try { to = window.atob(d.to || ''); } catch (e) { to = ''; }
-            return function (input) {
+            return function (input, mcClient) {
                 var p = normalizeArgs(input);
                 track(tool.name, detectClient(p));
                 if (!to) { return errorResult('Contact is currently unavailable.'); }
@@ -226,11 +244,14 @@
                 var mailto = 'mailto:' + to
                     + '?subject=' + encodeURIComponent(subject)
                     + '&body=' + encodeURIComponent(body);
-                window.location.href = mailto;
-                return {
-                    content: [{ type: 'text', text: fill(d.successTemplate || 'A pre-filled e-mail to {to} has been opened.', { to: to }) }],
-                    structuredContent: { to: to, subject: subject, body: body, mailto: mailto }
-                };
+                return confirmSideEffect(mcClient, d.confirm ? fill(d.confirm, { to: to, subject: subject }) : '').then(function (ok) {
+                    if (!ok) { return errorResult('Cancelled.'); }
+                    window.location.href = mailto;
+                    return {
+                        content: [{ type: 'text', text: fill(d.successTemplate || 'A pre-filled e-mail to {to} has been opened.', { to: to }) }],
+                        structuredContent: { to: to, subject: subject, body: body, mailto: mailto }
+                    };
+                });
             };
         },
 
@@ -256,11 +277,11 @@
     // Escape hatch: a tool with no matching primitive but a moduleUrl loads its
     // own ES module (exporting execute(args, ctx)) on first call.
     var moduleExecute = function (tool) {
-        return function (input) {
+        return function (input, mcClient) {
             var p = normalizeArgs(input);
             track(tool.name, detectClient(p));
             return import(tool.moduleUrl).then(function (mod) {
-                return mod.execute(p, { tool: tool, config: config });
+                return mod.execute(p, { tool: tool, config: config, client: mcClient });
             });
         };
     };

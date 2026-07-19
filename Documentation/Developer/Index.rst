@@ -136,9 +136,11 @@ Every tool maps to exactly one primitive. The generic runtime interprets the
                 'options' => [
                     ['match' => 'software', 'label' => 'Software', 'url' => 'https://…'],
                 ],
+                'confirm' => 'Open „{label}"?',               // optional; see below
                 'messages' => [                               // optional templates
                     'success' => 'Navigating to „{label}".',
                     'unknown' => 'Unknown option. Available: {options}.',
+                    'cancelled' => 'Navigation to „{label}" was cancelled.',
                 ],
             ]
 
@@ -207,6 +209,7 @@ Every tool maps to exactly one primitive. The generic runtime interprets the
                     ['label' => 'Organisation', 'param' => 'org', 'optional' => true],
                 ],
                 'messageParam' => 'message',                  // free text block at the end
+                'confirm' => 'Send this e-mail to {to}?',      // optional; see below
                 'successTemplate' => 'A pre-filled e-mail to {to} has been opened.',
             ]
 
@@ -230,6 +233,22 @@ Template placeholders
 The text templates use ``{field}`` placeholders filled from the item (or, for
 headings, from ``{count}`` / ``{query}``). ``{n}`` yields the 1-based index of
 the current line.
+
+Confirming side effects
+=======================
+
+The ``navigate`` and ``mailto`` primitives change state — they move the browser or
+open a mail client. Set a ``confirm`` message on their ``data`` to require a
+human-in-the-loop confirmation *before* the side effect runs. The runtime prefers
+the WebMCP client's ``requestUserInteraction()`` (which lets the agent surface the
+page to the user first) and falls back to a plain ``confirm()`` when the client
+does not provide it. If the user declines, the tool returns an ``isError`` result
+(``navigate`` uses the ``cancelled`` message when set) and the side effect never
+happens.
+
+Omit ``confirm`` to keep the previous behaviour — the tool runs without asking. The
+``confirm`` string is filled with the same ``{placeholders}`` as the other
+messages (``navigate``: the chosen option; ``mailto``: ``{to}`` and ``{subject}``).
 
 Escape hatch
 ============
@@ -267,10 +286,12 @@ The contract
         //       (the runtime unwraps an { arguments: {…} } envelope for you).
         //       Includes the optional `client` analytics hint if the agent set it.
         //
-        // ctx:  { tool, config }
+        // ctx:  { tool, config, client }
         //   ctx.tool   – this tool's manifest object
         //                { name, description, inputSchema, primitive, data, moduleUrl }
         //   ctx.config – the whole page manifest { endpoint, tools: [...] }
+        //   ctx.client – the WebMCP ModelContextClient (may be undefined); call
+        //                ctx.client.requestUserInteraction(cb) for confirmations
 
         // Return an MCP tool result. `content` is required; `structuredContent`
         // is optional machine-readable output. You may return a Promise.
