@@ -139,11 +139,17 @@ tool names are derived automatically from the registered providers.
 
 ..  figure:: /Images/BackendModule.png
     :alt: The WebMCP backend module showing calls per tool and a timeline
+    :zoom: gallery
+    :class: with-border with-shadow
+    :gallery: backend-module
 
     The WebMCP dashboard: calls per tool/client, and a per-day timeline.
 
 ..  figure:: /Images/BackendModule2.png
     :alt: The WebMCP backend module showing also the recent calls in a table
+    :zoom: gallery
+    :class: with-border with-shadow
+    :gallery: backend-module
 
     The WebMCP dashboard: the most recent events.
 
