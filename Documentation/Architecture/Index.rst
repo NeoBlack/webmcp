@@ -32,8 +32,8 @@ Emitting tools (frontend render)
     TMP -> PG : JSON block\n(JSON_HEX_* escaped)
     PG -> RT : read #webmcp-config
     note right of RT : per tool: primitive\ninterpreter or moduleUrl
-    RT -> MC : registerTool()
-    MC --> RT : tool discoverable & callable
+    RT -> MC : provideContext({ tools })\n(else registerTool per tool)
+    MC --> RT : tools discoverable & callable
 
 ..  list-table:: Key classes
     :header-rows: 1

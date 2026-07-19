@@ -17,6 +17,11 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Changed:** the runtime now registers its tools atomically via
+    ``provideContext({ tools })`` (the WebMCP spec's primary entry point), falling
+    back to per-tool ``registerTool`` only where ``provideContext`` is absent.
+    Manifest entries that reuse a name already taken are dropped, so a duplicate
+    tool name no longer aborts registration.
 *   **Added:** the ``navigate`` and ``mailto`` primitives accept an optional
     ``confirm`` message that triggers a human-in-the-loop confirmation before the
     side effect runs, via the WebMCP client's ``requestUserInteraction()`` (with a

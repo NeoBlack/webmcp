@@ -24,7 +24,7 @@
     // origin trial still ships it on navigator. The two have not converged, so
     // feature-detect both, preferring the canonical document surface.
     var mc = document.modelContext || navigator.modelContext;
-    if (!mc || typeof mc.registerTool !== 'function') { return; }
+    if (!mc || (typeof mc.provideContext !== 'function' && typeof mc.registerTool !== 'function')) { return; }
 
     var endpoint = config.endpoint || '/webmcp-event';
 
@@ -290,13 +290,14 @@
 
     // ---- registration ----------------------------------------------------
 
-    config.tools.forEach(function (tool) {
-        if (!tool || !tool.name) { return; }
+    // Turn one manifest entry into a ModelContext tool descriptor, or null if it
+    // names no known primitive and no module.
+    var toDescriptor = function (tool) {
         var factory = primitives[tool.primitive];
         var execute;
         if (factory) { execute = factory(tool); }
         else if (tool.moduleUrl) { execute = moduleExecute(tool); }
-        else { return; }
+        else { return null; }
 
         // Every tool implicitly accepts the analytics `client` hint.
         var schema = (tool.inputSchema && typeof tool.inputSchema === 'object')
@@ -315,6 +316,28 @@
         if (tool.annotations && typeof tool.annotations === 'object') {
             descriptor.annotations = tool.annotations;
         }
-        mc.registerTool(descriptor);
+        return descriptor;
+    };
+
+    // Build the descriptor set, dropping entries with no name and any later tool
+    // that reuses a name already taken — registerTool throws on duplicates and
+    // provideContext expects unique names, so we dedupe once up front.
+    var seen = {};
+    var descriptors = [];
+    config.tools.forEach(function (tool) {
+        if (!tool || !tool.name || seen[tool.name]) { return; }
+        var descriptor = toDescriptor(tool);
+        if (!descriptor) { return; }
+        seen[tool.name] = true;
+        descriptors.push(descriptor);
     });
+    if (!descriptors.length) { return; }
+
+    // Prefer provideContext: it registers the whole set atomically (the spec's
+    // primary entry point). Fall back to per-tool registerTool where it is absent.
+    if (typeof mc.provideContext === 'function') {
+        mc.provideContext({ tools: descriptors });
+    } else {
+        descriptors.forEach(function (descriptor) { mc.registerTool(descriptor); });
+    }
 })();
