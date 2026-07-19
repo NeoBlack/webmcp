@@ -73,7 +73,7 @@ jobs:
           composer require --dev --no-update typo3/testing-framework:dev-main
 
       - name: Pin TYPO3 core version
-        run: composer require --no-update typo3/cms-core:${{ matrix.typo3-version }} typo3/cms-frontend:${{ matrix.typo3-version }}
+        run: composer require --no-update typo3/cms-core:${{ matrix.typo3-version }} typo3/cms-frontend:${{ matrix.typo3-version }} typo3/cms-form:${{ matrix.typo3-version }}
 
       - name: Install dependencies
         run: composer update --no-progress --with-all-dependencies
