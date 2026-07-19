@@ -311,6 +311,8 @@
             inputSchema: schema,
             execute: execute
         };
+        // Optional human-readable label, distinct from the machine-stable name.
+        if (tool.title) { descriptor.title = tool.title; }
         // Pass the read-only hint through verbatim so the agent can decide whether
         // the tool may run without user confirmation.
         if (tool.annotations && typeof tool.annotations === 'object') {

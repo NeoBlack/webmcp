@@ -17,6 +17,10 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Added:** :php:`Manifest` gained an optional ``title`` argument — a
+    human-readable label for UI display, distinct from the machine-stable
+    ``name``. It is emitted into the manifest and forwarded to the tool descriptor
+    only when set.
 *   **Changed:** the runtime now registers its tools atomically via
     ``provideContext({ tools })`` (the WebMCP spec's primary entry point), falling
     back to per-tool ``registerTool`` only where ``provideContext`` is absent.

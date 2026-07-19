@@ -46,6 +46,20 @@ final class ManifestTest extends UnitTestCase
         self::assertFalse($json['annotations']['readOnlyHint']);
     }
 
+    public function testOmitsTitleWhenNull(): void
+    {
+        $json = (new Manifest('greet', 'desc', [], Primitive::StaticList))->jsonSerialize();
+
+        self::assertArrayNotHasKey('title', $json);
+    }
+
+    public function testSerialisesTitleWhenSet(): void
+    {
+        $json = (new Manifest('greet', 'desc', [], Primitive::StaticList, [], null, null, 'Say hello'))->jsonSerialize();
+
+        self::assertSame('Say hello', $json['title']);
+    }
+
     public function testKeepsSchemaDataAndModuleUrl(): void
     {
         $json = (new Manifest(

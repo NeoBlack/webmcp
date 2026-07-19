@@ -95,6 +95,10 @@ Construct it with named arguments:
         -   ``?bool``
         -   Override the read-only hint. ``null`` (default) derives it from the
             primitive; see below.
+    *   -   ``title``
+        -   ``?string``
+        -   Optional human-readable label for UI display. The machine-stable
+            ``name`` is used when omitted.
 
 ..  note::
 

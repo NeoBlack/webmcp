@@ -29,6 +29,8 @@ final class Manifest implements \JsonSerializable
      * @param string|null          $moduleUrl   optional ES module URL providing a custom execute()
      * @param bool|null            $readOnly    override the read-only hint; null derives it from
      *                                          the primitive (see {@see Primitive::isReadOnly()})
+     * @param string|null          $title       optional human-readable label for UI display; the
+     *                                          machine-stable $name is used when omitted
      */
     public function __construct(
         public readonly string $name,
@@ -38,6 +40,7 @@ final class Manifest implements \JsonSerializable
         public readonly array $data = [],
         public readonly ?string $moduleUrl = null,
         public readonly ?bool $readOnly = null,
+        public readonly ?string $title = null,
     ) {
     }
 
@@ -56,6 +59,9 @@ final class Manifest implements \JsonSerializable
                 'readOnlyHint' => $this->readOnly ?? $this->primitive->isReadOnly(),
             ],
         ];
+        if (null !== $this->title) {
+            $out['title'] = $this->title;
+        }
         if (null !== $this->moduleUrl) {
             $out['moduleUrl'] = $this->moduleUrl;
         }
