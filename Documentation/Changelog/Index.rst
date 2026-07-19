@@ -17,6 +17,10 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Changed:** the built-in primitives now flag genuine failure paths
+    (``navigate`` with an unknown option, ``mailto`` with no configured contact)
+    with the WebMCP ``isError`` result flag, so agents can tell a failed call from
+    a successful one. An empty but valid search result stays a success.
 *   **Added:** each tool manifest now carries a WebMCP
     ``annotations.readOnlyHint`` flag, derived from the primitive (``search`` and
     ``static`` are read-only; ``navigate`` and ``mailto`` are not) and overridable

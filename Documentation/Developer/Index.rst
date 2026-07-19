@@ -289,10 +289,17 @@ The contract
 ..  warning::
 
     **Errors surface to the agent.** A thrown error or rejected Promise
-    propagates as the tool call's failure — return a normal result for the
-    "no match / unavailable" case instead of throwing. Loading is lazy and
-    best-effort: a failed import fails only that one call, nothing else on the
-    page is affected.
+    propagates as the tool call's failure — for a recoverable "no match /
+    unavailable" case return a normal result with ``isError: true`` instead of
+    throwing, so the agent learns the call failed but the page stays healthy:
+
+    ..  code-block:: javascript
+
+        return { content: [{ type: 'text', text: 'No match.' }], isError: true };
+
+    Loading is lazy and best-effort: a failed import fails only that one call,
+    nothing else on the page is affected. The built-in primitives already flag
+    their failure paths (e.g. ``navigate`` with an unknown option) this way.
 
 Analytics
 =========

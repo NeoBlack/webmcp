@@ -117,6 +117,12 @@
 
     var textResult = function (text) { return { content: [{ type: 'text', text: text }] }; };
 
+    // A recoverable tool failure: same shape as textResult but flagged isError so
+    // the agent can tell "the call failed" from "the call succeeded with this text".
+    // Reserved for genuine failures (unknown option, unavailable contact) — an empty
+    // but valid search result is a success, not an error.
+    var errorResult = function (text) { return { content: [{ type: 'text', text: text }], isError: true }; };
+
     // ---- primitive interpreters -----------------------------------------
     // Each returns an execute() closure for the given tool manifest.
 
@@ -137,7 +143,7 @@
                 var opt = byMatch[p[param]];
                 if (!opt) {
                     var avail = options.map(function (o) { return o.match; }).join(', ');
-                    return textResult(msgs.unknown ? fill(msgs.unknown, { options: avail })
+                    return errorResult(msgs.unknown ? fill(msgs.unknown, { options: avail })
                         : 'Unknown option. Available: ' + avail + '.');
                 }
                 window.location.href = opt.url;
@@ -207,7 +213,7 @@
             return function (input) {
                 var p = normalizeArgs(input);
                 track(tool.name, detectClient(p));
-                if (!to) { return textResult('Contact is currently unavailable.'); }
+                if (!to) { return errorResult('Contact is currently unavailable.'); }
                 var lines = [];
                 (d.bodyLines || []).forEach(function (bl) {
                     var val = p[bl.param];
