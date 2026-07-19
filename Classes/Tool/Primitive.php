@@ -28,4 +28,19 @@ enum Primitive: string
 
     /** Return a curated, static list of items verbatim. */
     case StaticList = 'static';
+
+    /**
+     * Whether the primitive only reads state, i.e. has no observable side effect.
+     * search and static merely return data; navigate changes the browser location
+     * and mailto opens a mail client, so both are read-write. Surfaced to the agent
+     * as the WebMCP ``readOnlyHint`` annotation, letting it decide whether a call
+     * may run without user confirmation.
+     */
+    public function isReadOnly(): bool
+    {
+        return match ($this) {
+            self::Search, self::StaticList => true,
+            self::Navigate, self::Mailto => false,
+        };
+    }
 }

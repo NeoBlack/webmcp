@@ -275,11 +275,17 @@
         schema.properties = schema.properties || {};
         if (!schema.properties.client) { schema.properties.client = clientProp; }
 
-        mc.registerTool({
+        var descriptor = {
             name: tool.name,
             description: tool.description || '',
             inputSchema: schema,
             execute: execute
-        });
+        };
+        // Pass the read-only hint through verbatim so the agent can decide whether
+        // the tool may run without user confirmation.
+        if (tool.annotations && typeof tool.annotations === 'object') {
+            descriptor.annotations = tool.annotations;
+        }
+        mc.registerTool(descriptor);
     });
 })();

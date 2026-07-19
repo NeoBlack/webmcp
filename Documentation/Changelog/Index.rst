@@ -17,7 +17,12 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
-*   *(nothing yet)*
+*   **Added:** each tool manifest now carries a WebMCP
+    ``annotations.readOnlyHint`` flag, derived from the primitive (``search`` and
+    ``static`` are read-only; ``navigate`` and ``mailto`` are not) and overridable
+    via the new ``readOnly`` argument on :php:`Manifest`. The generic runtime
+    forwards it to ``registerTool`` so agents can tell read-only tools from
+    state-changing ones.
 
 0.2.0 - 2026-07-19
 ==================

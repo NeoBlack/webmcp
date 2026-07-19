@@ -91,12 +91,29 @@ Construct it with named arguments:
     *   -   ``moduleUrl``
         -   ``?string``
         -   Optional ES-module URL for the escape hatch.
+    *   -   ``readOnly``
+        -   ``?bool``
+        -   Override the read-only hint. ``null`` (default) derives it from the
+            primitive; see below.
 
 ..  note::
 
     The runtime injects a ``client`` string property into every tool's input
     schema automatically (for the optional analytics hint), so you do not declare
     it yourself.
+
+Read-only hint
+==============
+
+Each manifest carries a WebMCP ``annotations.readOnlyHint`` flag telling the agent
+whether the tool merely reads state or changes it. Agents use it to decide whether
+a call may run without user confirmation.
+
+The value is derived from the primitive: ``search`` and ``static`` are read-only,
+``navigate`` (changes the browser location) and ``mailto`` (opens a mail client)
+are not. Pass ``readOnly: true``/``false`` explicitly to override the default — for
+example when an escape-hatch module built on the ``search`` primitive actually
+mutates state.
 
 Primitives
 ==========

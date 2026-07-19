@@ -29,6 +29,23 @@ final class ManifestTest extends UnitTestCase
         self::assertArrayNotHasKey('moduleUrl', $json);
     }
 
+    public function testDerivesReadOnlyHintFromPrimitive(): void
+    {
+        $readOnly = (new Manifest('list', 'd', [], Primitive::StaticList))->jsonSerialize();
+        $writing = (new Manifest('go', 'd', [], Primitive::Navigate))->jsonSerialize();
+
+        self::assertTrue($readOnly['annotations']['readOnlyHint']);
+        self::assertFalse($writing['annotations']['readOnlyHint']);
+    }
+
+    public function testExplicitReadOnlyOverridesPrimitiveDefault(): void
+    {
+        // A search that mutates state (custom module) can opt out of the read-only default.
+        $json = (new Manifest('x', 'd', [], Primitive::Search, [], null, false))->jsonSerialize();
+
+        self::assertFalse($json['annotations']['readOnlyHint']);
+    }
+
     public function testKeepsSchemaDataAndModuleUrl(): void
     {
         $json = (new Manifest(
