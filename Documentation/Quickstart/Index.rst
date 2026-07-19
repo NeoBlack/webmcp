@@ -128,6 +128,14 @@ Reload a frontend page and open the browser's developer console.
 
     You should see your ``list_services`` tool in the returned array.
 
+    ..  figure:: /Images/QuickstartConsole.png
+        :alt: Browser console showing the list_services tool in the parsed manifest
+        :zoom: gallery
+        :class: with-border with-shadow
+
+        The parsed manifest in the browser console, listing the
+        ``list_services`` tool.
+
 #.  Confirm the runtime registered it against the ``ModelContext``:
 
     ..  code-block:: javascript
