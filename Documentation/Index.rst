@@ -2,9 +2,9 @@
 
 .. _start:
 
-======
-WebMCP
-======
+=====================
+WebMCP tool for TYPO3
+=====================
 
 :Extension key:
     neoblack_webmcp

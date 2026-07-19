@@ -12,6 +12,6 @@
                interlink-shortcode="neoblack/webmcp"
                typo3-core-preferred="stable"
     />
-    <project title="WebMCP tool framework for TYPO3" version="0.1" release="0.2.0"
+    <project title="WebMCP tool for TYPO3" version="0.1" release="0.2.0"
              copyright="Since 2026 by Frank Nägler and contributors" />
 </guides>
