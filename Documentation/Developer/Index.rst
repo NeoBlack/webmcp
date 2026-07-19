@@ -2,9 +2,9 @@
 
 .. _developer:
 
-===============
+=============
 Writing tools
-===============
+=============
 
 A tool is a PHP class implementing
 :php:`\Neoblack\Webmcp\Tool\ToolProviderInterface`. Thanks to the
@@ -13,28 +13,49 @@ autoconfigured service implementing it is picked up automatically – in this
 extension, a site package, or any third-party extension. No manual
 :file:`Services.yaml` wiring is needed.
 
+..  contents::
+    :local:
+    :depth: 1
+
 The interface
 =============
 
-..  code-block:: php
+..  php:namespace:: Neoblack\Webmcp\Tool
 
-    interface ToolProviderInterface
-    {
-        // Context-free, stable name. Used for the analytics whitelist before
-        // the frontend is resolved. Must equal the Manifest name.
-        public function name(): string;
+..  php:interface:: ToolProviderInterface
 
-        // Return the tool's Manifest, or null to omit it for this request
-        // (e.g. a blog tool on a site without a blog). $processedData carries
-        // the results of data processors that ran earlier in the same content
-        // object, so you can build on them (e.g. a menu).
-        public function manifest(ContentObjectRenderer $cObj, array $processedData): ?Manifest;
-    }
+    Implemented by every tool and tagged ``webmcp.tool`` via the interface's
+    ``#[AutoconfigureTag]`` attribute.
+
+    ..  php:method:: name()
+
+        Context-free, stable tool name. Used for the analytics whitelist before
+        the frontend is resolved, so it must equal the :php:`Manifest` name.
+
+        :returns: ``string`` – the stable tool name
+
+    ..  php:method:: manifest($cObj, $processedData)
+
+        Build the tool's manifest for the current request.
+
+        :param ContentObjectRenderer $cObj: the current content object renderer
+        :param array $processedData: results of data processors that ran earlier
+            in the same content object, so you can build on them (e.g. a menu)
+        :returns: a :php:`Manifest`, or ``null`` to omit the tool for this
+            request (e.g. a blog tool on a site without a blog)
 
 The manifest
 ============
 
+..  php:class:: Manifest
+
+    The serialisable description of a single tool. A provider returns one of
+    these; the data processor collects them into the page's JSON block.
+
+Construct it with named arguments:
+
 ..  code-block:: php
+    :caption: Building a Manifest
 
     new Manifest(
         name: 'search_articles',
@@ -45,9 +66,37 @@ The manifest
         moduleUrl: null, // optional escape hatch, see below
     );
 
-The runtime injects a ``client`` string property into every tool's input schema
-automatically (for the optional analytics hint), so you do not declare it
-yourself.
+..  list-table::
+    :header-rows: 1
+    :widths: 20 20 60
+
+    *   -   Argument
+        -   Type
+        -   Purpose
+    *   -   ``name``
+        -   ``string``
+        -   Tool name; must equal :php:`ToolProviderInterface::name()`.
+    *   -   ``description``
+        -   ``string``
+        -   Human-readable description shown to the agent.
+    *   -   ``inputSchema``
+        -   ``array``
+        -   JSON schema for the tool arguments.
+    *   -   ``primitive``
+        -   :php:`Primitive`
+        -   One of the four behaviour primitives.
+    *   -   ``data``
+        -   ``array``
+        -   Primitive-specific payload (see below).
+    *   -   ``moduleUrl``
+        -   ``?string``
+        -   Optional ES-module URL for the escape hatch.
+
+..  note::
+
+    The runtime injects a ``client`` string property into every tool's input
+    schema automatically (for the optional analytics hint), so you do not declare
+    it yourself.
 
 Primitives
 ==========
@@ -55,88 +104,93 @@ Primitives
 Every tool maps to exactly one primitive. The generic runtime interprets the
 ``data`` payload; you never write JavaScript.
 
-navigate
---------
+..  tabs::
 
-Navigate to a URL chosen from a fixed option set.
+    ..  group-tab:: navigate
 
-..  code-block:: php
+        Navigate the browser to a URL chosen from a fixed option set.
 
-    primitive: Primitive::Navigate,
-    data: [
-        'param' => 'kategorie',                       // which argument selects
-        'options' => [
-            ['match' => 'software', 'label' => 'Software', 'url' => 'https://…'],
-        ],
-        'messages' => [                               // optional templates
-            'success' => 'Navigating to „{label}".',
-            'unknown' => 'Unknown option. Available: {options}.',
-        ],
-    ]
+        ..  code-block:: php
+            :caption: navigate primitive
 
-search
-------
+            primitive: Primitive::Navigate,
+            data: [
+                'param' => 'kategorie',                       // which argument selects
+                'options' => [
+                    ['match' => 'software', 'label' => 'Software', 'url' => 'https://…'],
+                ],
+                'messages' => [                               // optional templates
+                    'success' => 'Navigating to „{label}".',
+                    'unknown' => 'Unknown option. Available: {options}.',
+                ],
+            ]
 
-Fetch a same-origin JSON index, filter it by the query terms, return structured
-hits.
+    ..  group-tab:: search
 
-..  code-block:: php
+        Fetch a same-origin JSON index, filter it by the query terms, return
+        structured hits.
 
-    primitive: Primitive::Search,
-    data: [
-        'indexUrl' => 'https://…/index.json',
-        'queryParam' => 'query',
-        'limitParam' => 'limit',
-        'limitDefault' => 10,
-        'queryRequired' => true,                      // false: list all when empty
-        'searchFields' => ['title', 'teaser'],        // fields searched
-        'resultKey' => 'results',
-        'resultFields' => ['title' => 'title', 'cat' => 'categoryLabel'],
-        'deepLinkTemplate' => 'https://…/blog#q={query}', // optional
-        'text' => [                                   // optional output templates
-            'heading' => '{count} hits for „{query}“:',
-            'headingAll' => '{count} entries:',
-            'line' => '{n}. {title} – {url}',
-            'emptyQuery' => 'No hits for „{query}“.',
-            'emptyAll' => 'No entries.',
-        ],
-    ]
+        ..  code-block:: php
+            :caption: search primitive
 
-``resultFields`` may be a list (pick fields 1:1) or a map (``output => source``
-rename); omit it to pass items through unchanged.
+            primitive: Primitive::Search,
+            data: [
+                'indexUrl' => 'https://…/index.json',
+                'queryParam' => 'query',
+                'limitParam' => 'limit',
+                'limitDefault' => 10,
+                'queryRequired' => true,                      // false: list all when empty
+                'searchFields' => ['title', 'teaser'],        // fields searched
+                'resultKey' => 'results',
+                'resultFields' => ['title' => 'title', 'cat' => 'categoryLabel'],
+                'deepLinkTemplate' => 'https://…/blog#q={query}', // optional
+                'text' => [                                   // optional output templates
+                    'heading' => '{count} hits for „{query}“:',
+                    'headingAll' => '{count} entries:',
+                    'line' => '{n}. {title} – {url}',
+                    'emptyQuery' => 'No hits for „{query}“.',
+                    'emptyAll' => 'No entries.',
+                ],
+            ]
 
-mailto
-------
+        ..  tip::
 
-Build a pre-filled ``mailto:`` link and open it. No server storage.
+            ``resultFields`` may be a list (pick fields 1:1) or a map
+            (``output => source`` rename); omit it to pass items through
+            unchanged.
 
-..  code-block:: php
+    ..  group-tab:: mailto
 
-    primitive: Primitive::Mailto,
-    data: [
-        'to' => base64_encode('me@example.org'),      // base64, kept out of source
-        'subjectTemplate' => 'Request – {anliegen}',
-        'bodyLines' => [                              // "Label: value" lines
-            ['label' => 'Name', 'param' => 'name'],
-            ['label' => 'Organisation', 'param' => 'org', 'optional' => true],
-        ],
-        'messageParam' => 'message',                  // free text block at the end
-        'successTemplate' => 'A pre-filled e-mail to {to} has been opened.',
-    ]
+        Build a pre-filled ``mailto:`` link and open it. No server storage.
 
-static
-------
+        ..  code-block:: php
+            :caption: mailto primitive
 
-Return a curated list verbatim.
+            primitive: Primitive::Mailto,
+            data: [
+                'to' => base64_encode('me@example.org'),      // base64, kept out of source
+                'subjectTemplate' => 'Request – {anliegen}',
+                'bodyLines' => [                              // "Label: value" lines
+                    ['label' => 'Name', 'param' => 'name'],
+                    ['label' => 'Organisation', 'param' => 'org', 'optional' => true],
+                ],
+                'messageParam' => 'message',                  // free text block at the end
+                'successTemplate' => 'A pre-filled e-mail to {to} has been opened.',
+            ]
 
-..  code-block:: php
+    ..  group-tab:: static
 
-    primitive: Primitive::StaticList,
-    data: [
-        'items' => [['title' => 'Software', 'url' => 'https://…']],
-        'resultKey' => 'services',
-        'text' => ['heading' => 'Services:', 'line' => '{n}. {title} – {url}'],
-    ]
+        Return a curated list verbatim.
+
+        ..  code-block:: php
+            :caption: static primitive
+
+            primitive: Primitive::StaticList,
+            data: [
+                'items' => [['title' => 'Software', 'url' => 'https://…']],
+                'resultKey' => 'services',
+                'text' => ['heading' => 'Services:', 'line' => '{n}. {title} – {url}'],
+            ]
 
 Template placeholders
 =====================
@@ -158,8 +212,9 @@ The contract
 ------------
 
 ..  code-block:: javascript
+    :caption: your-tool.js — custom execute() implementation
 
-    // your-tool.js  (served same-origin, or CORS-enabled for dynamic import)
+    // served same-origin, or CORS-enabled for dynamic import
     export function execute(args, ctx) {
         // args: the tool arguments the agent passed, already normalised
         //       (the runtime unwraps an { arguments: {…} } envelope for you).
@@ -178,33 +233,32 @@ The contract
         };
     }
 
-Notes:
+..  tip::
 
-*   **Analytics is already handled.** The runtime fires the usage beacon before
-    importing your module, so you do not call the endpoint yourself.
-*   **Keep ``data`` for your own config.** Anything the primitives don't use is
-    yours; read it from ``ctx.tool.data``.
-*   **Errors surface to the agent.** A thrown error or rejected Promise
+    **Analytics is already handled.** The runtime fires the usage beacon before
+    importing your module, so you do not call the endpoint yourself. Keep ``data``
+    for your own config and read it from :js:`ctx.tool.data`.
+
+..  warning::
+
+    **Errors surface to the agent.** A thrown error or rejected Promise
     propagates as the tool call's failure — return a normal result for the
-    "no match / unavailable" case instead of throwing.
-*   **Loading is best-effort and lazy.** The module is fetched only on first
-    call; a failed import means that one call fails, nothing else on the page is
-    affected.
+    "no match / unavailable" case instead of throwing. Loading is lazy and
+    best-effort: a failed import fails only that one call, nothing else on the
+    page is affected.
 
 Analytics
 =========
 
 Every tool call sends a same-origin beacon to the configured endpoint. The
-:php:`ToolRegistry::toolNames()` list (all registered providers) is the
-whitelist the ingest middleware validates against – it follows your tools
-automatically. For the recorded fields, retention and endpoint hardening see
-:ref:`analytics`.
+:php:`\Neoblack\Webmcp\Registry\ToolRegistry::toolNames()` list (all registered
+providers) is the whitelist the ingest middleware validates against – it follows
+your tools automatically.
 
-See also
-========
+..  seealso::
 
-*   :ref:`quickstart` – a full end-to-end example using the ``static`` primitive.
-*   :ref:`architecture` – how providers, the registry, the processor and the
-    runtime fit together.
-*   :ref:`analytics` – what the beacon records and how the ingest endpoint is
-    protected.
+    *   :ref:`quickstart` – a full end-to-end example using the ``static`` primitive.
+    *   :ref:`architecture` – how providers, the registry, the processor and the
+        runtime fit together.
+    *   :ref:`analytics` – what the beacon records and how the ingest endpoint is
+        protected.

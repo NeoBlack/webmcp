@@ -7,7 +7,7 @@ Configuration
 =============
 
 Extension configuration
-========================
+=======================
 
 Set these in the TYPO3 backend under :guilabel:`Admin Tools > Settings >
 Extension Configuration > neoblack_webmcp` (the defaults live in
@@ -40,11 +40,10 @@ package / TypoScript, so you stay in control of *where* the tools are exposed.
 1. Emit the manifest
 --------------------
 
-Add the data processor to the page's ``FLUIDTEMPLATE`` (or ``PAGEVIEW``). If a
-tool provider relies on an earlier data processor (e.g. a ``MenuProcessor``),
-make sure that runs first.
+Add the data processor to the page's ``FLUIDTEMPLATE`` (or ``PAGEVIEW``).
 
 ..  code-block:: typoscript
+    :caption: Page TypoScript — register the data processor
 
     page.10.dataProcessing {
         # optional: a menu a navigate tool can build on
@@ -60,6 +59,12 @@ make sure that runs first.
             as = webmcpConfigJson
         }
     }
+
+..  important::
+
+    If a tool provider relies on an earlier data processor (e.g. a
+    ``MenuProcessor``), make sure that processor has a lower key so it runs
+    *before* the :php:`\Neoblack\Webmcp\DataProcessing\ToolManifestProcessor`.
 
 ..  confval:: endpoint
     :name: dataprocessor-endpoint
@@ -78,10 +83,11 @@ make sure that runs first.
 2. Render the JSON block
 ------------------------
 
-Output the manifest once per page inside a ``<script>`` tag with the id
+Output the manifest once per page inside a :html:`<script>` tag with the id
 ``webmcp-config`` (the id the runtime looks for):
 
 ..  code-block:: html
+    :caption: Fluid page template — render the JSON block
 
     <f:if condition="{webmcpConfigJson}">
         <script type="application/json" id="webmcp-config"><f:format.raw>{webmcpConfigJson}</f:format.raw></script>
@@ -91,6 +97,7 @@ Output the manifest once per page inside a ``<script>`` tag with the id
 ----------------------
 
 ..  code-block:: typoscript
+    :caption: Page TypoScript — include the runtime
 
     page.includeJSFooter {
         webmcp = EXT:neoblack_webmcp/Resources/Public/JavaScript/webmcp.js
@@ -101,5 +108,9 @@ Backend module
 ==============
 
 When analytics is enabled, the :guilabel:`System > WebMCP` module visualises tool
-usage. Its data model, retention and the hardening of the public ingest
-endpoint are described in :ref:`analytics`.
+usage.
+
+..  seealso::
+
+    :ref:`analytics` describes the module's data model, retention and the
+    hardening of the public ingest endpoint.

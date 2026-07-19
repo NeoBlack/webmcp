@@ -17,6 +17,7 @@ Emitting tools (frontend render)
 ================================
 
 ..  code-block:: text
+    :caption: Flow — from PHP provider to registered agent tool
 
     ToolProvider(s)                 one small PHP class per tool
         │  manifest($cObj, $processedData)  → Manifest | null
@@ -35,23 +36,32 @@ Emitting tools (frontend render)
         ▼
     document.modelContext.registerTool()   agent can now discover & call the tool
 
-Key classes:
+..  list-table:: Key classes
+    :header-rows: 1
+    :widths: 40 60
 
-*   :php:`\Neoblack\Webmcp\Tool\ToolProviderInterface` – the contract each tool
-    implements. Tagged ``webmcp.tool`` (autoconfigured).
-*   :php:`\Neoblack\Webmcp\Tool\Manifest` / :php:`\Neoblack\Webmcp\Tool\Primitive`
-    – the serialisable tool description and its behaviour selector.
-*   :php:`\Neoblack\Webmcp\Registry\ToolRegistry` – collects manifests for the
-    current request and exposes :php:`toolNames()` for the analytics whitelist.
-*   :php:`\Neoblack\Webmcp\DataProcessing\ToolManifestProcessor` – serialises the
-    manifests into the page's JSON block.
-*   :file:`Resources/Public/JavaScript/webmcp.js` – the generic runtime holding
-    all four primitive interpreters and the escape-hatch loader.
+    *   -   Class
+        -   Responsibility
+    *   -   :php:`\Neoblack\Webmcp\Tool\ToolProviderInterface`
+        -   The contract each tool implements. Tagged ``webmcp.tool``
+            (autoconfigured).
+    *   -   :php:`\Neoblack\Webmcp\Tool\Manifest` /
+            :php:`\Neoblack\Webmcp\Tool\Primitive`
+        -   The serialisable tool description and its behaviour selector.
+    *   -   :php:`\Neoblack\Webmcp\Registry\ToolRegistry`
+        -   Collects manifests for the current request and exposes
+            :php:`toolNames()` for the analytics whitelist.
+    *   -   :php:`\Neoblack\Webmcp\DataProcessing\ToolManifestProcessor`
+        -   Serialises the manifests into the page's JSON block.
+    *   -   :file:`Resources/Public/JavaScript/webmcp.js`
+        -   The generic runtime holding all four primitive interpreters and the
+            escape-hatch loader.
 
 Ingesting usage events (call time)
 ==================================
 
 ..  code-block:: text
+    :caption: Flow — from tool call to backend dashboard
 
     webmcp.js  ──POST /webmcp-event──►  EventMiddleware
       navigator.sendBeacon                 │  same-origin guard (Sec-Fetch-Site)
@@ -66,25 +76,40 @@ Ingesting usage events (call time)
     Backend:  DashboardController ──► StatisticsService ──► EventRepository
               (System > WebMCP module)     aggregates by tool / client / day
 
-Key classes:
+..  list-table:: Key classes
+    :header-rows: 1
+    :widths: 40 60
 
-*   :php:`\Neoblack\Webmcp\Middleware\EventMiddleware` – the public ingest
-    endpoint. Inert when analytics is disabled; passes unknown tools down the
-    stack so it can coexist with other handlers.
-*   :php:`\Neoblack\Webmcp\Security\RateLimiter` – fixed-window limiter keyed on a
-    hashed IP + window number (no plaintext IP stored).
-*   :php:`\Neoblack\Webmcp\Domain\Repository\EventRepository` – the only class
-    that writes/reads the event table.
-*   :php:`\Neoblack\Webmcp\Service\StatisticsService` – aggregates rows into the
-    DTOs the backend module renders.
-*   :php:`\Neoblack\Webmcp\Controller\DashboardController` – thin backend
-    controller; reads the filter, delegates, renders.
+    *   -   Class
+        -   Responsibility
+    *   -   :php:`\Neoblack\Webmcp\Middleware\EventMiddleware`
+        -   The public ingest endpoint. Inert when analytics is disabled; passes
+            unknown tools down the stack so it can coexist with other handlers.
+    *   -   :php:`\Neoblack\Webmcp\Security\RateLimiter`
+        -   Fixed-window limiter keyed on a hashed IP + window number (no
+            plaintext IP stored).
+    *   -   :php:`\Neoblack\Webmcp\Domain\Repository\EventRepository`
+        -   The only class that writes/reads the event table.
+    *   -   :php:`\Neoblack\Webmcp\Service\StatisticsService`
+        -   Aggregates rows into the DTOs the backend module renders.
+    *   -   :php:`\Neoblack\Webmcp\Controller\DashboardController`
+        -   Thin backend controller; reads the filter, delegates, renders.
 
 Why the two flows are decoupled
 ===============================
 
 The middleware runs early, before the frontend page is resolved, so it cannot
 rely on a rendered manifest. It therefore validates incoming events against
-:php:`ToolRegistry::toolNames()` — the context-free provider names — rather than
-against the per-page manifest. This is why :php:`ToolProviderInterface::name()`
-must be stable and must equal the :php:`Manifest` name.
+:php:`\Neoblack\Webmcp\Registry\ToolRegistry::toolNames()` — the context-free
+provider names — rather than against the per-page manifest.
+
+..  important::
+
+    This is why :php:`\Neoblack\Webmcp\Tool\ToolProviderInterface::name()` must be
+    stable and must equal the :php:`Manifest` name. A mismatch means valid tool
+    calls are dropped by the ingest middleware.
+
+..  seealso::
+
+    *   :ref:`developer` – the provider interface and manifest in detail.
+    *   :ref:`analytics` – the event table and how the endpoint is hardened.
