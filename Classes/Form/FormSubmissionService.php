@@ -13,6 +13,7 @@ namespace Neoblack\Webmcp\Form;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Error\Error;
 use TYPO3\CMS\Extbase\Mvc\ExtbaseRequestParameters;
 use TYPO3\CMS\Extbase\Mvc\Request as ExtbaseRequest;
@@ -84,6 +85,11 @@ final class FormSubmissionService implements FormSubmissionServiceInterface
         if (!is_array($options) || true !== ($options['enable'] ?? false) || !$this->schemaBuilder->build($definitionArray)->supported) {
             return FormSubmissionResult::failed('This form is not available for submission.');
         }
+
+        // EXT:form builds the definition through the extbase ConfigurationManager
+        // (it reads the prototype's TypoScript). We run outside an extbase request,
+        // so that singleton has no request and would throw; prime it with ours.
+        GeneralUtility::makeInstance(ConfigurationManagerInterface::class)->setRequest($request);
 
         $factory = GeneralUtility::makeInstance(ArrayFormFactory::class);
         $formDefinition = $factory->build($definitionArray, null, $request);
