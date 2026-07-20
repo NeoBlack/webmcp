@@ -17,6 +17,11 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   *(nothing yet)*
+
+0.3.0 - 2026-07-20
+==================
+
 *   **Added:** each manifest now also carries the WebMCP
     ``annotations.untrustedContentHint`` flag, warning the agent that a tool's
     output may contain untrusted third-party data. It is derived from the primitive
