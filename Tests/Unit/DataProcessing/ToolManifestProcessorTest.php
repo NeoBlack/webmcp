@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Neoblack\Webmcp\Tests\Unit\DataProcessing;
 
 use Neoblack\Webmcp\DataProcessing\ToolManifestProcessor;
+use Neoblack\Webmcp\Form\FormRegistry;
 use Neoblack\Webmcp\Registry\ToolRegistry;
 use Neoblack\Webmcp\Tool\Manifest;
 use Neoblack\Webmcp\Tool\Primitive;
@@ -43,7 +44,7 @@ final class ToolManifestProcessorTest extends UnitTestCase
                     return new Manifest('evil', $this->evil, [], Primitive::StaticList, ['label' => $this->evil]);
                 }
             },
-        ]));
+        ], new FormRegistry()));
 
         $json = $processor->process($this->cObj(), [], ['as' => 'webmcpConfigJson'], [])['webmcpConfigJson'];
 
@@ -55,7 +56,7 @@ final class ToolManifestProcessorTest extends UnitTestCase
 
     public function testEmitsEmptyStringWhenNoToolsRegistered(): void
     {
-        $processor = new ToolManifestProcessor(new ToolRegistry([]));
+        $processor = new ToolManifestProcessor(new ToolRegistry([], new FormRegistry()));
 
         $result = $processor->process($this->cObj(), [], ['as' => 'webmcpConfigJson'], []);
 

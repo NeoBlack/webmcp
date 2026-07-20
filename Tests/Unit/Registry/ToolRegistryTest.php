@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Neoblack\Webmcp\Tests\Unit\Registry;
 
+use Neoblack\Webmcp\Form\FormRegistry;
 use Neoblack\Webmcp\Registry\ToolRegistry;
 use Neoblack\Webmcp\Tool\Manifest;
 use Neoblack\Webmcp\Tool\Primitive;
@@ -25,12 +26,24 @@ final class ToolRegistryTest extends UnitTestCase
             $this->provider('a', $this->manifest('a')),
             $this->provider('b', null),
             $this->provider('c', $this->manifest('c')),
-        ]);
+        ], new FormRegistry());
 
         $manifests = $registry->collect($this->createStub(ContentObjectRenderer::class), []);
 
         self::assertCount(2, $manifests);
         self::assertSame(['a', 'c'], array_map(static fn (Manifest $m): string => $m->name, $manifests));
+    }
+
+    public function testCollectAppendsFormManifests(): void
+    {
+        $forms = new FormRegistry();
+        $forms->add($this->manifest('contact'));
+
+        $registry = new ToolRegistry([$this->provider('a', $this->manifest('a'))], $forms);
+
+        $manifests = $registry->collect($this->createStub(ContentObjectRenderer::class), []);
+
+        self::assertSame(['a', 'contact'], array_map(static fn (Manifest $m): string => $m->name, $manifests));
     }
 
     public function testToolNamesAreDeduplicated(): void
@@ -39,7 +52,7 @@ final class ToolRegistryTest extends UnitTestCase
             $this->provider('a', null),
             $this->provider('a', null),
             $this->provider('b', null),
-        ]);
+        ], new FormRegistry());
 
         self::assertSame(['a', 'b'], $registry->toolNames());
     }

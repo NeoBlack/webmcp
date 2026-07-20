@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Neoblack\Webmcp\Tests\Unit\Middleware;
 
 use Neoblack\Webmcp\Domain\Repository\EventRepository;
+use Neoblack\Webmcp\Form\FormRegistry;
 use Neoblack\Webmcp\Middleware\EventMiddleware;
 use Neoblack\Webmcp\Registry\ToolRegistry;
 use Neoblack\Webmcp\Security\RateLimiter;
@@ -150,7 +151,7 @@ final class EventMiddlewareTest extends UnitTestCase
             },
             $toolNames,
         );
-        $registry = new ToolRegistry($providers);
+        $registry = new ToolRegistry($providers, new FormRegistry());
 
         $extensionConfiguration = $this->createStub(ExtensionConfiguration::class);
         $extensionConfiguration->method('get')->willReturn($analyticsEnabled ? '1' : '0');
