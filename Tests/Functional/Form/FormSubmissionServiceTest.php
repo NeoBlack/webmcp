@@ -76,7 +76,7 @@ final class FormSubmissionServiceTest extends FunctionalTestCase
      */
     private function service(array $definition): FormSubmissionService
     {
-        $manager = $this->createMock(FormPersistenceManagerInterface::class);
+        $manager = $this->createStub(FormPersistenceManagerInterface::class);
         $manager->method('load')->willReturn($definition);
         // The service resolves the persistence manager via makeInstance; prime it.
         GeneralUtility::addInstance(FormPersistenceManagerInterface::class, $manager);

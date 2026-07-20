@@ -12,6 +12,8 @@ namespace Neoblack\Webmcp\Form;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\TypoScript\AST\Node\RootNode;
+use TYPO3\CMS\Core\TypoScript\FrontendTypoScript;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Error\Error;
@@ -86,9 +88,13 @@ final class FormSubmissionService implements FormSubmissionServiceInterface
             return FormSubmissionResult::failed('This form is not available for submission.');
         }
 
-        // EXT:form builds the definition through the extbase ConfigurationManager
-        // (it reads the prototype's TypoScript). We run outside an extbase request,
-        // so that singleton has no request and would throw; prime it with ours.
+        // EXT:form builds the definition through the extbase ConfigurationManager,
+        // which reads plugin.tx_form.settings from the frontend TypoScript setup.
+        // Our submit endpoint runs before page resolution, so no setup was computed
+        // and the ConfigurationManager would throw. Prime an empty (but initialized)
+        // setup: the form prototype itself comes from EXT:form's auto-discovered
+        // YAML, not from TypoScript, so an empty setup is enough to build the form.
+        $request = $this->withFrontendTypoScript($request);
         GeneralUtility::makeInstance(ConfigurationManagerInterface::class)->setRequest($request);
 
         $factory = GeneralUtility::makeInstance(ArrayFormFactory::class);
@@ -198,5 +204,22 @@ final class FormSubmissionService implements FormSubmissionServiceInterface
         }
 
         return new ExtbaseRequest($request);
+    }
+
+    /**
+     * Ensure the request carries an initialized frontend TypoScript setup, so the
+     * extbase ConfigurationManager returns empty settings instead of throwing. A
+     * real setup (should a later middleware position ever provide one) is kept.
+     */
+    private function withFrontendTypoScript(ServerRequestInterface $request): ServerRequestInterface
+    {
+        if ($request->getAttribute('frontend.typoscript') instanceof FrontendTypoScript) {
+            return $request;
+        }
+
+        $frontendTypoScript = new FrontendTypoScript(new RootNode(), [], [], []);
+        $frontendTypoScript->setSetupArray([]);
+
+        return $request->withAttribute('frontend.typoscript', $frontendTypoScript);
     }
 }
