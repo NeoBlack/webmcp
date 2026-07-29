@@ -43,11 +43,12 @@ jobs:
           - '8.2'
           - '8.3'
           - '8.4'
+          - '8.5'
         typo3-version:
           - '^14.3'
         include:
           # TYPO3 core development branch — moving target, allowed to fail.
-          - php-version: '8.4'
+          - php-version: '8.5'
             typo3-version: 'dev-main'
             experimental: true
     steps:
