@@ -17,6 +17,17 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
+*   **Added (experimental):** an EXT:form bridge. A TYPO3 form opted in with the
+    ``renderingOptions.webmcp`` flag is exposed as a WebMCP tool; an agent fills
+    and submits it, and the form's own server-side validation and finishers run.
+    Only single-step forms of supported field types are offered — a form with any
+    unsupported field is refused, both at save time (with a clear editor message)
+    and at registration. Requires ``typo3/cms-form`` (a suggestion); the extension
+    stays installable without it. See :ref:`form`. Because EXT:form exposes no
+    stable submission API, this relies on internal API and may need maintenance
+    across TYPO3 updates.
+
+
 *   *(nothing yet)*
 
 0.3.0 - 2026-07-20

@@ -21,8 +21,12 @@
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "saschaegerer/phpstan-typo3": "^3.0",
+        "typo3/cms-form": "^14.3",
         "typo3/coding-standards": "^0.8",
         "typo3/testing-framework": "^9.5"
+    },
+    "suggest": {
+        "typo3/cms-form": "Expose TYPO3 form definitions as WebMCP tools."
     },
     "autoload": {
         "psr-4": {

@@ -257,6 +257,48 @@
             };
         },
 
+        // Submit an opted-in TYPO3 form to this extension's own endpoint, which
+        // runs the form's server-side validation and finishers.
+        // data: { endpoint, token, confirm }
+        // No analytics beacon: form tools are not on the same-origin whitelist,
+        // and the submit endpoint records its own usage.
+        form: function (tool) {
+            var d = tool.data || {};
+            var endpoint = d.endpoint || '/webmcp-form';
+            return function (input, mcClient) {
+                var p = normalizeArgs(input);
+                return confirmSideEffect(mcClient, d.confirm || '').then(function (ok) {
+                    if (!ok) { return errorResult('Submission cancelled.'); }
+                    return fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ token: d.token, values: p })
+                    }).then(function (r) {
+                        return r.json().catch(function () { return null; });
+                    }).then(function (res) {
+                        if (!res) { return errorResult('The form could not be submitted.'); }
+                        if (res.ok === false) {
+                            // Validation failed — surface the field messages so the
+                            // agent can correct its input and retry.
+                            var msg = res.message || 'The form could not be submitted.';
+                            if (res.errors) {
+                                msg += ' ' + Object.keys(res.errors).map(function (k) {
+                                    return k + ': ' + res.errors[k];
+                                }).join('; ');
+                            }
+                            return errorResult(msg);
+                        }
+                        return {
+                            content: [{ type: 'text', text: res.message || 'The form was submitted.' }],
+                            structuredContent: res
+                        };
+                    }).catch(function () {
+                        return errorResult('The form could not be submitted.');
+                    });
+                });
+            };
+        },
+
         // Return a curated, static list verbatim.
         // data: { items:[…], resultKey, text:{heading,line} }
         static: function (tool) {
@@ -303,7 +345,9 @@
         var schema = (tool.inputSchema && typeof tool.inputSchema === 'object')
             ? tool.inputSchema : { type: 'object' };
         schema.properties = schema.properties || {};
-        if (!schema.properties.client) { schema.properties.client = clientProp; }
+        // Form tools submit their fields to the endpoint and send no analytics
+        // beacon, so they do not carry the optional client hint.
+        if (tool.primitive !== 'form' && !schema.properties.client) { schema.properties.client = clientProp; }
 
         var descriptor = {
             name: tool.name,
