@@ -33,6 +33,10 @@ final class Manifest implements \JsonSerializable
      *                                               machine-stable $name is used when omitted
      * @param bool|null            $untrustedContent override the untrusted-content hint; null derives
      *                                               it from the primitive (see {@see Primitive::hasUntrustedOutput()})
+     * @param bool|null            $consequential    override the consequential hint; null derives it
+     *                                               from the primitive (see {@see Primitive::isConsequential()})
+     * @param bool                 $debugging        mark the tool as a debugging aid; the annotation is
+     *                                               only emitted when explicitly set to true
      */
     public function __construct(
         public readonly string $name,
@@ -44,6 +48,8 @@ final class Manifest implements \JsonSerializable
         public readonly ?bool $readOnly = null,
         public readonly ?string $title = null,
         public readonly ?bool $untrustedContent = null,
+        public readonly ?bool $consequential = null,
+        public readonly bool $debugging = false,
     ) {
     }
 
@@ -61,8 +67,12 @@ final class Manifest implements \JsonSerializable
             'annotations' => [
                 'readOnlyHint' => $this->readOnly ?? $this->primitive->isReadOnly(),
                 'untrustedContentHint' => $this->untrustedContent ?? $this->primitive->hasUntrustedOutput(),
+                'consequentialHint' => $this->consequential ?? $this->primitive->isConsequential(),
             ],
         ];
+        if ($this->debugging) {
+            $out['annotations']['debugging'] = true;
+        }
         if (null !== $this->title) {
             $out['title'] = $this->title;
         }

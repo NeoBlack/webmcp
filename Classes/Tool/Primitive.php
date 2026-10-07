@@ -56,4 +56,17 @@ enum Primitive: string
     {
         return self::Search === $this;
     }
+
+    /**
+     * Whether a call has a consequence beyond the page itself that the user may
+     * want to review before it happens. mailto hands a composed message to the
+     * visitor's mail client, an action outside the site; navigate only moves
+     * within it (and can already ask via its `confirm` message), search and
+     * static merely read. Surfaced to the agent as the WebMCP
+     * ``consequentialHint`` annotation.
+     */
+    public function isConsequential(): bool
+    {
+        return self::Mailto === $this;
+    }
 }

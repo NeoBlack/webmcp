@@ -64,6 +64,43 @@ final class ManifestTest extends UnitTestCase
         self::assertTrue($json['annotations']['untrustedContentHint']);
     }
 
+    public function testDerivesConsequentialHintFromPrimitive(): void
+    {
+        // mailto acts outside the site (mail client); navigate, search and static do not.
+        foreach (Primitive::cases() as $primitive) {
+            $json = (new Manifest('t', 'd', [], $primitive))->jsonSerialize();
+
+            self::assertSame(Primitive::Mailto === $primitive, $json['annotations']['consequentialHint'], $primitive->value);
+        }
+    }
+
+    public function testExplicitConsequentialOverridesPrimitiveDefault(): void
+    {
+        $json = (new Manifest('go', 'd', [], Primitive::Navigate, consequential: true))->jsonSerialize();
+
+        self::assertTrue($json['annotations']['consequentialHint']);
+    }
+
+    public function testOmitsDebuggingAnnotationUnlessRequested(): void
+    {
+        $default = (new Manifest('l', 'd', [], Primitive::StaticList))->jsonSerialize();
+        $debug = (new Manifest('l', 'd', [], Primitive::StaticList, debugging: true))->jsonSerialize();
+
+        self::assertArrayNotHasKey('debugging', $default['annotations']);
+        self::assertTrue($debug['annotations']['debugging']);
+    }
+
+    public function testExistingPositionalArgumentsKeepTheirMeaning(): void
+    {
+        // 0.3 call sites pass up to nine positional arguments; the new ones are appended.
+        $json = (new Manifest('l', 'd', [], Primitive::StaticList, [], null, false, 'Title', true))->jsonSerialize();
+
+        self::assertFalse($json['annotations']['readOnlyHint']);
+        self::assertSame('Title', $json['title']);
+        self::assertTrue($json['annotations']['untrustedContentHint']);
+        self::assertFalse($json['annotations']['consequentialHint']);
+    }
+
     public function testOmitsTitleWhenNull(): void
     {
         $json = (new Manifest('greet', 'desc', [], Primitive::StaticList))->jsonSerialize();
