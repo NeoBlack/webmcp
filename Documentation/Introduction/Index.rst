@@ -10,8 +10,9 @@ What is WebMCP?
 ===============
 
 WebMCP exposes page-scoped *tools* to AI agents through the browser's
-``ModelContext`` interface (:js:`document.modelContext`, with a fallback to
-:js:`navigator.modelContext` used by Chrome's origin trial). An agent operating
+``ModelContext`` interface (:js:`document.modelContext`; older Chrome origin
+trial builds and polyfills also offer the deprecated
+:js:`navigator.modelContext`). An agent operating
 the page can discover these tools and call them – for example to search content,
 navigate to a section, or open a pre-filled contact e-mail.
 
@@ -102,26 +103,31 @@ Feature detection & progressive enhancement
 ============================================
 
 Everything degrades gracefully: without a ``ModelContext`` implementation,
-without configuration, or with a malformed manifest, nothing is registered and
-regular visitors are unaffected.
+without configuration, with a malformed manifest or inside an iframe, nothing is
+registered and regular visitors are unaffected. Your pages must — and with this
+extension do — work fully without WebMCP.
 
 ..  uml::
     :caption: Feature detection — nothing is registered without a ModelContext
 
     start
+    if (top-level document?) then (no, iframe)
+      :nothing registered;
+      stop
+    endif
     if (config block present and valid?) then (no)
       :nothing registered;
       stop
     endif
-    if (document.modelContext available?) then (yes)
+    if (document.modelContext.registerTool available?) then (yes)
       :use document.modelContext;
-    elseif (navigator.modelContext available?) then (yes)
-      :use navigator.modelContext\n(Chrome origin trial);
+    elseif (legacyNavigatorFallback on and\nnavigator.modelContext.registerTool available?) then (yes)
+      :use navigator.modelContext\n(deprecated);
     else (neither)
       :nothing registered;
       stop
     endif
-    :register each tool;
+    :registerTool() per tool,\neach with its own AbortSignal;
     stop
 
 ..  warning::

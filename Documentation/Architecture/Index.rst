@@ -32,8 +32,11 @@ Emitting tools (frontend render)
     TMP -> PG : JSON block\n(JSON_HEX_* escaped)
     PG -> RT : read #webmcp-config
     note right of RT : per tool: primitive\ninterpreter or moduleUrl
-    RT -> MC : provideContext({ tools })\n(else registerTool per tool)
-    MC --> RT : tools discoverable & callable
+    loop each tool
+      RT -> MC : registerTool(descriptor, { signal })
+      MC --> RT : registered — or rejected\n(e.g. duplicate name: warn once, skip)
+    end
+    note right of MC : tools appear one by one;\nthere is no atomic registration
 
 ..  list-table:: Key classes
     :header-rows: 1
@@ -52,9 +55,52 @@ Emitting tools (frontend render)
             :php:`toolNames()` for the analytics whitelist.
     *   -   :php:`\Neoblack\Webmcp\DataProcessing\ToolManifestProcessor`
         -   Serialises the manifests into the page's JSON block.
+    *   -   :php:`\Neoblack\Webmcp\Tool\ManifestValidator`
+        -   Checks each manifest against the spec's name pattern and Chrome's
+            size recommendations; the processor logs findings as warnings.
     *   -   :file:`Resources/Public/JavaScript/webmcp.js`
-        -   The generic runtime holding all four primitive interpreters and the
-            escape-hatch loader.
+        -   The generic runtime holding all four primitive interpreters, the
+            escape-hatch loader and the registration lifecycle.
+
+Registration in the browser
+---------------------------
+
+The runtime in :file:`webmcp.js` runs these steps once per page load:
+
+#.  **Top-level check.** Inside an iframe it stops: agents only discover tools
+    of the top-level document, and an embedding third-party page must not
+    receive the tools.
+#.  **Read the config block.** Missing, unparsable or tool-less → stop.
+#.  **Feature detection.** :js:`document.modelContext` is used when it offers
+    :js:`registerTool()`. Otherwise — only if :confval:`legacyNavigatorFallback
+    <dataprocessor-legacynavigatorfallback>` is on — the deprecated
+    :js:`navigator.modelContext`. Neither → stop silently.
+#.  **Build descriptors.** Each manifest entry becomes a tool descriptor
+    (name, title, description, input schema, annotations, ``execute``).
+    Entries without a name, with an unknown primitive and no ``moduleUrl``, or
+    reusing a name already used in the manifest are dropped. An entry whose
+    data makes the primitive fail is reported once and skipped.
+#.  **Register each tool individually.** Every tool gets its own
+    :js:`AbortController`; the runtime calls
+    :js:`registerTool(descriptor, { signal })` and accepts any return value
+    (``undefined``, a Promise or an object). If a call throws or its Promise
+    rejects — for example because another script on the page already took the
+    name — that one tool is skipped and a single :js:`console.warn` names it.
+    All other tools are unaffected.
+#.  **Teardown.** On ``pagehide`` all controllers are aborted, which
+    unregisters the tools; if the page is restored from the back/forward cache
+    (``pageshow`` with ``persisted``) they are registered again.
+
+Every ``execute`` call is wrapped so that a synchronous throw becomes a
+rejected Promise and text output is capped at :confval:`outputLimit
+<dataprocessor-outputlimit>` characters.
+
+..  note::
+
+    Up to version 0.3 the runtime preferred ``provideContext({ tools })`` for an
+    "atomic" registration. The specification removed ``provideContext()``, so
+    tools now appear one after another — this is intended by the specification.
+    See :ref:`security` for the background.
 
 Ingesting usage events (call time)
 ==================================

@@ -17,7 +17,55 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
-*   *(nothing yet)*
+Planned as **0.4.0**. Aligns the runtime with the WebMCP Community Group draft
+of 2026-10-02. See :ref:`upgrading` for what to check.
+
+Changed
+-------
+
+*   **Behavior change:** the runtime no longer uses ``provideContext()``, which
+    the specification removed. Every tool is registered individually via
+    ``registerTool()`` with its own ``AbortSignal``; tools therefore appear one
+    after another instead of atomically. A tool whose registration fails (e.g.
+    duplicate name) is skipped with a single ``console.warn``; the others are
+    unaffected. Tools are unregistered on ``pagehide`` and registered again when
+    the page returns from the back/forward cache.
+*   **Behavior change:** tools are only registered in the top-level document,
+    never inside iframes.
+*   **Behavior change:** the text output of a tool call is capped at 1,500
+    characters by default (see ``outputLimit``).
+*   The deprecated ``navigator.modelContext`` fallback is isolated and can be
+    switched off.
+
+Added
+-----
+
+*   ``consequential`` argument on :php:`Manifest`, emitted as
+    ``annotations.consequentialHint`` (derived from the primitive: only
+    ``mailto`` is flagged).
+*   ``debugging`` argument on :php:`Manifest`, emitted as
+    ``annotations.debugging`` only when ``true``.
+*   Data processor options ``legacyNavigatorFallback`` (default ``1``) and
+    ``outputLimit`` (default ``1500``, ``0`` = unlimited).
+*   :php:`ManifestValidator`: the data processor logs warnings for tool or
+    parameter names over 30 characters, descriptions over 500, parameter
+    descriptions over 150 (Chrome recommendations) and names outside the
+    specification's pattern. Tools are still emitted.
+*   Runtime tests (Node.js built-in test runner) and documentation chapters
+    :ref:`standards`, :ref:`security` and :ref:`upgrading`.
+
+Removed
+-------
+
+*   Use of ``provideContext()`` in the runtime.
+
+Migration
+---------
+
+No action is required for tools built on the four primitives. Escape-hatch
+modules that called ``provideContext()`` themselves must switch to
+``registerTool()``. Check tools that rely on long text output against the new
+``outputLimit``. Details: :ref:`upgrading`.
 
 0.3.0 - 2026-07-20
 ==================

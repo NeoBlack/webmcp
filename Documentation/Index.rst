@@ -31,8 +31,9 @@ WebMCP tool for TYPO3
 A declarative `WebMCP <https://github.com/webmachinelearning/webmcp>`__ tool
 framework for TYPO3. Define agent tools server-side as small PHP providers; the
 extension collects them into a per-page manifest and a generic JavaScript
-runtime registers each tool against :js:`document.modelContext` /
-:js:`navigator.modelContext`. Optional, privacy-preserving first-party analytics
+runtime registers each tool individually via
+:js:`document.modelContext.registerTool()` (with an optional, switchable
+fallback to the deprecated :js:`navigator.modelContext`). Optional, privacy-preserving first-party analytics
 are included.
 
 ..  warning::
@@ -88,10 +89,24 @@ Getting started
         What the first-party usage log records, how long it is kept and how the
         public endpoint is protected.
 
+    ..  card:: :ref:`🌐 Standards and browser support <standards>`
+
+        Where the WebMCP specification stands, which browsers and agents
+        support it, and what is still open.
+
+    ..  card:: :ref:`🛡️ Security considerations <security>`
+
+        Threats named by the specification, how the extension mitigates them
+        and what remains your responsibility.
+
     ..  card:: :ref:`🔧 Troubleshooting <troubleshooting>`
 
         Why tools might not register, providers not fire, or events not land —
         and how to check each.
+
+    ..  card:: :ref:`⏫ Upgrading <upgrading>`
+
+        What changes between versions and whether you need to act.
 
 ..  toctree::
     :maxdepth: 2
@@ -105,5 +120,8 @@ Getting started
     Developer/Index
     Architecture/Index
     Analytics/Index
+    Standards/Index
+    Security/Index
     Troubleshooting/Index
+    Upgrading/Index
     Changelog/Index

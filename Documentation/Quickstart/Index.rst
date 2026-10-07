@@ -144,9 +144,12 @@ Reload a frontend page and open the browser's developer console.
         document.modelContext || navigator.modelContext
 
     A ``ModelContext`` implementation is only present in agent-capable browsers
-    (or Chrome with the origin trial enabled). If :js:`document.modelContext` and
+    (for example Chrome with the WebMCP flag or origin trial, see
+    :ref:`standards`). If :js:`document.modelContext` and
     :js:`navigator.modelContext` are both ``undefined``, the page is fine — there
-    is simply no agent surface to register against.
+    is simply no agent surface to register against. To list the tools the page
+    actually registered, use the Model Context Tool Inspector extension (see
+    :ref:`troubleshooting`).
 
 ..  tip::
 

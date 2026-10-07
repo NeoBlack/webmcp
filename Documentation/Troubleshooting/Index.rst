@@ -58,8 +58,91 @@ matches and work through the checks in order.
 
             ``undefined`` in both → the browser has no agent surface. This is
             expected in a normal browser; the runtime intentionally does nothing.
-            Test with an agent-capable client or Chrome with the WebMCP origin
-            trial enabled.
+            See "The WebMCP API is not available in Chrome" below. Only
+            :js:`navigator.modelContext` set and
+            :confval:`legacyNavigatorFallback
+            <dataprocessor-legacynavigatorfallback>` off → nothing is
+            registered by design.
+
+        #.  **Is the page inside an iframe?** Tools are only registered in the
+            top-level document.
+
+    ..  accordion-item:: A tool is missing / "duplicate name" error in the console
+        :name: ts-duplicate
+        :header-level: 2
+
+        The runtime registers each tool on its own. If one registration fails,
+        only that tool is skipped and the console shows **one** warning naming
+        it, for example:
+
+        ..  code-block:: text
+
+            [webmcp] Tool "search_articles" was not registered: InvalidStateError: …
+
+        Common causes:
+
+        *   **Another script already registered the same name.** The
+            specification rejects a duplicate name. Check other WebMCP scripts
+            on the page (a second copy of :file:`webmcp.js`, a chatbot or
+            consent widget, a polyfill demo) and rename one of the tools.
+        *   **Invalid name or description.** Names must be 1–128 characters
+            from ``A-Z a-z 0-9 _ - .`` and the description must not be empty.
+            The TYPO3 log contains a warning from the manifest validator when a
+            name does not match.
+        *   **The entry could not be built** (e.g. ``options`` of a
+            ``navigate`` tool is not a list). Fix the provider's ``data``.
+
+        Duplicates *within* the manifest are dropped silently: the first entry
+        with a given name wins.
+
+    ..  accordion-item:: A console warning mentions navigator.modelContext
+        :name: ts-navigator-warning
+        :header-level: 2
+
+        This warning does **not** come from this extension — the runtime never
+        logs about it. It is emitted by the browser or by a WebMCP polyfill,
+        because :js:`navigator.modelContext` is the deprecated location of the
+        API. The runtime prefers :js:`document.modelContext` and only falls back
+        to the navigator when the document variant is missing. To avoid the
+        fallback altogether, set :confval:`legacyNavigatorFallback
+        <dataprocessor-legacynavigatorfallback>` to ``0``.
+
+    ..  accordion-item:: The WebMCP API is not available in Chrome
+        :name: ts-api-unavailable
+        :header-level: 2
+
+        In regular Chrome builds the API is not enabled yet (status as of
+        2026-10-07, see :ref:`standards`). To test locally:
+
+        #.  Use Chrome 149 or newer and enable
+            :guilabel:`chrome://flags/#enable-webmcp-testing`, then restart.
+        #.  Install the `Model Context Tool Inspector
+            <https://github.com/beaufortfrancois/model-context-tool-inspector>`__
+            extension to list and call the tools the page registered.
+
+        Visitors only get the API with that flag or when the site takes part in
+        the Chrome (or Edge) origin trial.
+
+    ..  accordion-item:: Tools do not show up in ChatGPT
+        :name: ts-chatgpt
+        :header-level: 2
+
+        According to OpenAI's documentation, site tools are only used by the
+        **built-in browser of the ChatGPT desktop app**, only for tools of the
+        **top-level document** (not iframes), and only with specific plans and
+        models. Check OpenAI's
+        `WebMCP documentation <https://learn.chatgpt.com/docs/webmcp>`__ for the
+        current requirements. Each call additionally goes through a safety
+        review on OpenAI's side, which may block it.
+
+    ..  accordion-item:: Tool output ends with "[Output truncated …]"
+        :name: ts-truncated
+        :header-level: 2
+
+        The text output exceeded :confval:`outputLimit
+        <dataprocessor-outputlimit>` (default 1,500 characters). Return less
+        text — e.g. lower a search ``limitDefault`` or shorten the ``line``
+        template — or raise the limit.
 
     ..  accordion-item:: My provider is never called
         :name: ts-provider

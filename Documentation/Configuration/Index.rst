@@ -56,6 +56,9 @@ Add the data processor to the page's ``FLUIDTEMPLATE`` (or ``PAGEVIEW``).
         40 = Neoblack\Webmcp\DataProcessing\ToolManifestProcessor
         40 {
             endpoint = /webmcp-event
+            # optional, shown with their defaults
+            legacyNavigatorFallback = 1
+            outputLimit = 1500
             as = webmcpConfigJson
         }
     }
@@ -72,6 +75,39 @@ Add the data processor to the page's ``FLUIDTEMPLATE`` (or ``PAGEVIEW``).
     :Default: /webmcp-event
 
     Analytics beacon target written into the manifest.
+
+..  confval:: legacyNavigatorFallback
+    :name: dataprocessor-legacynavigatorfallback
+    :type: boolean
+    :Default: 1
+
+    Whether the runtime may fall back to the deprecated
+    :js:`navigator.modelContext` when :js:`document.modelContext` is not
+    available. The specification only defines :js:`document.modelContext`;
+    the navigator location is still served by older Chrome origin trial builds
+    and by polyfills. Set to ``0`` to register against
+    :js:`document.modelContext` only.
+
+    ..  note::
+
+        The default is planned to change to ``0`` — and the fallback to be
+        removed — once Chrome and the common polyfills drop the navigator
+        alias. Any console warning about :js:`navigator.modelContext` comes
+        from the browser or a polyfill, never from this extension.
+
+..  confval:: outputLimit
+    :name: dataprocessor-outputlimit
+    :type: integer
+    :Default: 1500
+
+    Maximum number of characters of text a single tool call returns to the
+    agent. Longer text is cut and ends with a visible
+    ``[Output truncated to … characters.]`` marker (the marker counts towards
+    the limit). ``0`` disables the cap. The default follows Chrome's
+    `Secure tools <https://developer.chrome.com/docs/ai/webmcp/secure-tools>`__
+    recommendation. ``structuredContent`` is never cut, because truncated JSON
+    would be invalid; keep it small via the primitive's own options (e.g. the
+    search ``limitDefault``).
 
 ..  confval:: as
     :name: dataprocessor-as
@@ -103,6 +139,18 @@ Output the manifest once per page inside a :html:`<script>` tag with the id
         webmcp = EXT:neoblack_webmcp/Resources/Public/JavaScript/webmcp.js
         webmcp.defer = 1
     }
+
+Where tools are registered
+==========================
+
+The runtime registers tools **only in the top-level document**. When a page is
+shown inside an iframe — same-origin or cross-origin — nothing is registered.
+This is not configurable: agents such as ChatGPT's built-in browser do not
+discover tools in iframes anyway, and a third-party page embedding yours must
+not receive its tools.
+
+The extension never sets the specification's ``exposedTo`` registration option,
+so tools are not exposed to other origins.
 
 Backend module
 ==============

@@ -64,6 +64,8 @@ Construct it with named arguments:
         primitive: Primitive::Search,
         data: [ /* primitive-specific payload, see below */ ],
         moduleUrl: null, // optional escape hatch, see below
+        // optional overrides, see the hint sections below:
+        // readOnly: …, title: …, untrustedContent: …, consequential: …, debugging: …
     );
 
 ..  list-table::
@@ -103,6 +105,14 @@ Construct it with named arguments:
         -   ``?bool``
         -   Override the untrusted-content hint. ``null`` (default) derives it from
             the primitive; see below.
+    *   -   ``consequential``
+        -   ``?bool``
+        -   Override the consequential hint. ``null`` (default) derives it from
+            the primitive; see below.
+    *   -   ``debugging``
+        -   ``bool``
+        -   Mark the tool as a debugging aid. Default ``false``; the annotation
+            is only emitted when set to ``true``.
 
 ..  note::
 
@@ -136,6 +146,92 @@ and ``navigate`` / ``mailto`` only return messages the runtime built itself, so 
 three default to ``false``. Pass ``untrustedContent: true``/``false`` to override —
 for instance when a ``static`` list is assembled from user-supplied data, or an
 escape-hatch module returns third-party content.
+
+Consequential hint
+==================
+
+``annotations.consequentialHint`` tells the agent that a call has a consequence
+the user may want to review before it happens. It is derived from the primitive:
+only ``mailto`` is flagged, because it hands a composed message to the visitor's
+mail client — an action outside your site. ``navigate`` only moves within the
+site (and can ask the user itself, see `Confirming side effects`_), ``search``
+and ``static`` merely read. Pass ``consequential: true``/``false`` to override,
+for example for an escape-hatch module that submits data.
+
+Debugging annotation
+====================
+
+``debugging: true`` emits ``annotations.debugging``, which the specification
+defines for tools meant for development and testing. It is never set by default;
+only set it for tools you do not want agents to use in normal operation.
+
+Defaults per primitive
+======================
+
+..  list-table::
+    :header-rows: 1
+    :widths: 20 20 20 20 20
+
+    *   -   Primitive
+        -   ``readOnlyHint``
+        -   ``untrustedContentHint``
+        -   ``consequentialHint``
+        -   ``debugging``
+    *   -   ``navigate``
+        -   ``false``
+        -   ``false``
+        -   ``false``
+        -   omitted
+    *   -   ``search``
+        -   ``true``
+        -   ``true``
+        -   ``false``
+        -   omitted
+    *   -   ``mailto``
+        -   ``false``
+        -   ``false``
+        -   ``true``
+        -   omitted
+    *   -   ``static``
+        -   ``true``
+        -   ``false``
+        -   ``false``
+        -   omitted
+
+Recommended limits
+==================
+
+The specification requires tool names of 1–128 characters from
+``A-Z a-z 0-9 _ - .``. Beyond that, Chrome's
+`Secure tools <https://developer.chrome.com/docs/ai/webmcp/secure-tools>`__
+guidance recommends tighter budgets. They are **recommendations, not rules**:
+
+..  list-table::
+    :header-rows: 1
+    :widths: 50 50
+
+    *   -   What
+        -   Recommended maximum
+    *   -   Tool name, parameter name
+        -   30 characters
+    *   -   Tool description
+        -   500 characters
+    *   -   Parameter description
+        -   150 characters
+    *   -   Text output of one call
+        -   1,500 characters
+
+The :php:`\Neoblack\Webmcp\DataProcessing\ToolManifestProcessor` checks every
+manifest with :php:`\Neoblack\Webmcp\Tool\ManifestValidator` and writes a
+**warning to the TYPO3 log** for each name or description over these budgets and
+for names outside the specification's pattern. The tool is emitted regardless.
+The output budget is enforced at runtime via :confval:`outputLimit
+<dataprocessor-outputlimit>`.
+
+..  note::
+
+    Tools are only registered in the top-level document, never inside iframes
+    (see :ref:`configuration`).
 
 Primitives
 ==========
@@ -261,10 +357,15 @@ Confirming side effects
 
 The ``navigate`` and ``mailto`` primitives change state — they move the browser or
 open a mail client. Set a ``confirm`` message on their ``data`` to require a
-human-in-the-loop confirmation *before* the side effect runs. The runtime prefers
-the WebMCP client's ``requestUserInteraction()`` (which lets the agent surface the
-page to the user first) and falls back to a plain ``confirm()`` when the client
-does not provide it. If the user declines, the tool returns an ``isError`` result
+human-in-the-loop confirmation *before* the side effect runs. The runtime uses
+``requestUserInteraction()`` where the browser offers it on the ``execute``
+callback's second argument and otherwise a plain ``confirm()``.
+
+..  note::
+
+    The current specification draft (2026-10-02) does not define
+    ``requestUserInteraction()``; Chrome lists it as planned. In today's
+    implementations the ``confirm()`` fallback is therefore the usual path. If the user declines, the tool returns an ``isError`` result
 (``navigate`` uses the ``cancelled`` message when set) and the side effect never
 happens.
 
@@ -312,11 +413,14 @@ The contract
         //   ctx.tool   – this tool's manifest object
         //                { name, description, inputSchema, primitive, data, moduleUrl }
         //   ctx.config – the whole page manifest { endpoint, tools: [...] }
-        //   ctx.client – the WebMCP ModelContextClient (may be undefined); call
-        //                ctx.client.requestUserInteraction(cb) for confirmations
+        //   ctx.client – the second argument the browser passed to execute():
+        //                in the current draft an object with an AbortSignal
+        //                ({ signal }); older implementations passed a client
+        //                with requestUserInteraction(). May be undefined.
 
         // Return an MCP tool result. `content` is required; `structuredContent`
         // is optional machine-readable output. You may return a Promise.
+        // Text content is capped at the configured outputLimit.
         return {
             content: [{ type: 'text', text: 'Done.' }],
             structuredContent: { ok: true },

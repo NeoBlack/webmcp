@@ -10,8 +10,9 @@
 A declarative [WebMCP](https://github.com/webmachinelearning/webmcp) tool
 framework for TYPO3. Define agent tools server-side as small PHP providers; the
 extension collects them into a per-page manifest and a generic JavaScript
-runtime registers each tool against `document.modelContext` /
-`navigator.modelContext`. Optional, privacy-preserving first-party analytics
+runtime registers each tool individually via
+`document.modelContext.registerTool()` (with an optional, switchable fallback
+to the deprecated `navigator.modelContext`). Optional, privacy-preserving first-party analytics
 are included.
 
 - **Extension key:** `neoblack_webmcp`
