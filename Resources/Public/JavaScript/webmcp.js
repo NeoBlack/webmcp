@@ -2,17 +2,22 @@
  *
  * Reads a declarative tool manifest from <script type="application/json"
  * id="webmcp-config"> (emitted by ToolManifestProcessor) and registers each
- * tool against the page's ModelContext. Tool behaviour is data-driven: every
- * tool names a primitive (navigate | search | mailto | static) whose generic
- * interpreter lives here, so new tools are defined entirely server-side. A tool
- * that needs behaviour no primitive covers may instead point `moduleUrl` at an
- * ES module exporting execute(args, ctx).
+ * tool individually via ModelContext.registerTool(). Tool behaviour is
+ * data-driven: every tool names a primitive (navigate | search | mailto |
+ * static) whose generic interpreter lives here, so new tools are defined
+ * entirely server-side. A tool that needs behaviour no primitive covers may
+ * instead point `moduleUrl` at an ES module exporting execute(args, ctx).
  *
- * Progressive enhancement throughout: absent config, absent ModelContext, or a
- * malformed manifest simply means nothing is registered; regular visitors are
- * never affected. */
+ * Progressive enhancement throughout: absent config, absent ModelContext, a
+ * malformed manifest or an embedding iframe simply means nothing is
+ * registered; regular visitors are never affected. */
 (function () {
     'use strict';
+
+    // Tools belong to the top-level document only: agents (e.g. ChatGPT's
+    // built-in browser) ignore tools from iframes, and a page embedded by a
+    // third party must not offer its tools through the embedder.
+    if (window.top !== window.self) { return; }
 
     var cfgEl = document.getElementById('webmcp-config');
     if (!cfgEl) { return; }
@@ -20,11 +25,33 @@
     try { config = JSON.parse(cfgEl.textContent || 'null'); } catch (e) { return; }
     if (!config || !Array.isArray(config.tools) || !config.tools.length) { return; }
 
-    // The W3C spec exposes ModelContext on the document (page-scoped); Chrome's
-    // origin trial still ships it on navigator. The two have not converged, so
-    // feature-detect both, preferring the canonical document surface.
-    var mc = document.modelContext || navigator.modelContext;
-    if (!mc || (typeof mc.provideContext !== 'function' && typeof mc.registerTool !== 'function')) { return; }
+    var supportsRegisterTool = function (candidate) {
+        return !!candidate && typeof candidate.registerTool === 'function';
+    };
+
+    // DEPRECATED: navigator.modelContext is the pre-spec location of the API,
+    // still served by Chrome's origin trial builds and polyfills. Kept as an
+    // opt-out fallback (config.legacyNavigatorFallback, default on). Switch the
+    // default to off, then remove this function, once Chrome and the polyfills
+    // drop the alias. The extension deliberately logs nothing here.
+    var legacyNavigatorModelContext = function () {
+        return navigator.modelContext;
+    };
+
+    // The spec exposes ModelContext on the document (page-scoped); prefer it.
+    var resolveModelContext = function () {
+        if (supportsRegisterTool(document.modelContext)) { return document.modelContext; }
+        if (config.legacyNavigatorFallback !== false) {
+            var legacy = legacyNavigatorModelContext();
+            if (supportsRegisterTool(legacy)) { return legacy; }
+        }
+        return null;
+    };
+
+    var mc = resolveModelContext();
+    // Every registration carries an AbortSignal, the spec's only way to
+    // unregister a tool again.
+    if (!mc || typeof AbortController !== 'function') { return; }
 
     var endpoint = config.endpoint || '/webmcp-event';
 
@@ -125,11 +152,30 @@
     // but valid search result is a success, not an error.
     var errorResult = function (text) { return { content: [{ type: 'text', text: text }], isError: true }; };
 
+    // Cap the text an agent receives from one call (Chrome's "Secure tools"
+    // guidance recommends 1,500 characters). 0 disables the cap. The truncation
+    // marker counts towards the limit, so the visible text never exceeds it.
+    // structuredContent is left untouched: cutting JSON would corrupt it.
+    var outputLimit = typeof config.outputLimit === 'number' ? config.outputLimit : 1500;
+    var limitOutput = function (result) {
+        if (!(outputLimit > 0) || !result || !Array.isArray(result.content)) { return result; }
+        var note = '\n[Output truncated to ' + outputLimit + ' characters.]';
+        var budget = outputLimit;
+        result.content.forEach(function (part) {
+            if (!part || part.type !== 'text' || typeof part.text !== 'string') { return; }
+            if (part.text.length <= budget) { budget -= part.text.length; return; }
+            part.text = budget > 0 ? part.text.slice(0, Math.max(0, budget - note.length)) + note : '';
+            budget = 0;
+        });
+        return result;
+    };
+
     // Human-in-the-loop confirmation before a side effect (navigate, mailto).
-    // Opt-in: only asks when the tool configured a `confirm` message. Prefers the
-    // WebMCP client's requestUserInteraction() — which lets the agent surface the
-    // page to the user first — and falls back to a plain confirm() when the client
-    // does not provide it. Returns a Promise<boolean>: true means proceed.
+    // Opt-in: only asks when the tool configured a `confirm` message. Uses
+    // requestUserInteraction() on the execute callback's second argument where
+    // an implementation offers it (older drafts and Chrome's guidance; the
+    // 2026-10-02 draft passes only { signal }), else a plain confirm().
+    // Returns a Promise<boolean>: true means proceed.
     var confirmSideEffect = function (mcClient, message) {
         if (!message) { return Promise.resolve(true); }
         var ask = function () { return window.confirm(message); };
@@ -290,6 +336,17 @@
 
     // ---- registration ----------------------------------------------------
 
+    // Report a tool that cannot be registered once, by name, without ever
+    // throwing: one broken tool must not affect the page or the other tools.
+    var warned = {};
+    var warnOnce = function (name, reason) {
+        if (warned[name]) { return; }
+        warned[name] = true;
+        if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[webmcp] Tool "' + name + '" was not registered:', reason);
+        }
+    };
+
     // Turn one manifest entry into a ModelContext tool descriptor, or null if it
     // names no known primitive and no module.
     var toDescriptor = function (tool) {
@@ -309,37 +366,71 @@
             name: tool.name,
             description: tool.description || '',
             inputSchema: schema,
-            execute: execute
+            // Synchronous throws become rejections; text output is capped.
+            execute: function (input, mcClient) {
+                return new Promise(function (resolve) { resolve(execute(input, mcClient)); }).then(limitOutput);
+            }
         };
         // Optional human-readable label, distinct from the machine-stable name.
         if (tool.title) { descriptor.title = tool.title; }
-        // Pass the read-only hint through verbatim so the agent can decide whether
-        // the tool may run without user confirmation.
+        // Pass the annotations (readOnlyHint, untrustedContentHint,
+        // consequentialHint, debugging) through verbatim; the agent uses them to
+        // decide whether a call needs user confirmation.
         if (tool.annotations && typeof tool.annotations === 'object') {
             descriptor.annotations = tool.annotations;
         }
         return descriptor;
     };
 
-    // Build the descriptor set, dropping entries with no name and any later tool
-    // that reuses a name already taken — registerTool throws on duplicates and
-    // provideContext expects unique names, so we dedupe once up front.
+    // Build the descriptor set, dropping entries with no name, entries that fail
+    // to build, and any later tool reusing a name already taken in the manifest.
     var seen = {};
     var descriptors = [];
     config.tools.forEach(function (tool) {
-        if (!tool || !tool.name || seen[tool.name]) { return; }
-        var descriptor = toDescriptor(tool);
+        if (!tool || typeof tool.name !== 'string' || !tool.name || seen[tool.name]) { return; }
+        var descriptor;
+        try { descriptor = toDescriptor(tool); } catch (e) { warnOnce(tool.name, e); return; }
         if (!descriptor) { return; }
         seen[tool.name] = true;
         descriptors.push(descriptor);
     });
     if (!descriptors.length) { return; }
 
-    // Prefer provideContext: it registers the whole set atomically (the spec's
-    // primary entry point). Fall back to per-tool registerTool where it is absent.
-    if (typeof mc.provideContext === 'function') {
-        mc.provideContext({ tools: descriptors });
-    } else {
-        descriptors.forEach(function (descriptor) { mc.registerTool(descriptor); });
-    }
+    // Each tool is registered on its own with its own AbortController, so tools
+    // appear one after another (there is no atomic "register all" in the spec).
+    // registerTool() throws for a name already taken on the page — e.g. by a
+    // third-party script — or an invalid descriptor; that only skips this tool.
+    // Its return value is tolerated in every shape (undefined, a Promise, an
+    // object) because the spec has not settled it yet.
+    var registrations = new Map();
+    var registerAll = function () {
+        descriptors.forEach(function (descriptor) {
+            var name = descriptor.name;
+            if (registrations.has(name)) { return; }
+            var controller = new AbortController();
+            registrations.set(name, controller);
+            var failed = function (reason) {
+                if (registrations.get(name) === controller) { registrations.delete(name); }
+                warnOnce(name, reason);
+            };
+            try {
+                Promise.resolve(mc.registerTool(descriptor, { signal: controller.signal })).catch(failed);
+            } catch (e) {
+                failed(e);
+            }
+        });
+    };
+
+    // Unregister everything when the page is hidden, and register again if it
+    // comes back from the back/forward cache.
+    var unregisterAll = function () {
+        registrations.forEach(function (controller) { controller.abort(); });
+        registrations.clear();
+    };
+    window.addEventListener('pagehide', unregisterAll);
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) { registerAll(); }
+    });
+
+    registerAll();
 })();

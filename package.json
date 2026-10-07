@@ -1,0 +1,12 @@
+{
+    "name": "neoblack-webmcp-runtime-tests",
+    "private": true,
+    "description": "Tests for the WebMCP client runtime (Resources/Public/JavaScript/webmcp.js). No dependencies; uses the Node.js built-in test runner.",
+    "license": "GPL-2.0-or-later",
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "test": "node --test Tests/JavaScript/*.test.mjs"
+    }
+}

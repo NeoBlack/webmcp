@@ -11,6 +11,9 @@ declare(strict_types=1);
 namespace Neoblack\Webmcp\DataProcessing;
 
 use Neoblack\Webmcp\Registry\ToolRegistry;
+use Neoblack\Webmcp\Tool\ManifestValidator;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\ContentObject\DataProcessorInterface;
 
@@ -21,22 +24,34 @@ use TYPO3\CMS\Frontend\ContentObject\DataProcessorInterface;
  * Output shape:
  *   {
  *     "endpoint": "/webmcp-event",          // analytics beacon target
- *     "tools": [ {name, description, inputSchema, primitive, data}, … ]
+ *     "legacyNavigatorFallback": true,      // also try navigator.modelContext
+ *     "outputLimit": 1500,                  // max. characters of tool text output, 0 = unlimited
+ *     "tools": [ {name, description, inputSchema, primitive, data, annotations}, … ]
  *   }
  *
- * The result is empty (no tag rendered) when no provider yields a tool.
+ * The result is empty (no tag rendered) when no provider yields a tool. Every
+ * manifest is checked by the ManifestValidator; findings are logged as
+ * warnings and never stop a tool from being emitted.
  *
  * TypoScript usage:
  *   dataProcessing.40 = Neoblack\Webmcp\DataProcessing\ToolManifestProcessor
  *   dataProcessing.40 {
  *     endpoint = /webmcp-event
+ *     legacyNavigatorFallback = 1
+ *     outputLimit = 1500
  *     as = webmcpConfigJson
  *   }
  */
-final class ToolManifestProcessor implements DataProcessorInterface
+final class ToolManifestProcessor implements DataProcessorInterface, LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
+    /** Chrome "Secure tools" recommends at most 1,500 characters of tool output. */
+    public const DEFAULT_OUTPUT_LIMIT = 1500;
+
     public function __construct(
         private readonly ToolRegistry $registry,
+        private readonly ManifestValidator $validator,
     ) {
     }
 
@@ -62,10 +77,18 @@ final class ToolManifestProcessor implements DataProcessorInterface
             return $processedData;
         }
 
+        foreach ($tools as $tool) {
+            foreach ($this->validator->validate($tool) as $finding) {
+                $this->logger?->warning($finding, ['tool' => $tool->name]);
+            }
+        }
+
         $endpoint = trim((string) $cObj->stdWrapValue('endpoint', $processorConfiguration));
 
         $payload = [
             'endpoint' => '' !== $endpoint ? $endpoint : '/webmcp-event',
+            'legacyNavigatorFallback' => (bool) $cObj->stdWrapValue('legacyNavigatorFallback', $processorConfiguration, '1'),
+            'outputLimit' => max(0, (int) $cObj->stdWrapValue('outputLimit', $processorConfiguration, (string) self::DEFAULT_OUTPUT_LIMIT)),
             'tools' => $tools,
         ];
 

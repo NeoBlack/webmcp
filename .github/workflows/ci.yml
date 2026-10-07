@@ -32,6 +32,20 @@ jobs:
       - name: Static analysis
         run: composer phpstan
 
+  javascript:
+    name: Runtime tests (Node.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Runtime tests
+        run: npm test
+
   tests:
     name: Tests (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})
     runs-on: ubuntu-latest
