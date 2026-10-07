@@ -76,13 +76,16 @@ final class EventMiddleware implements MiddlewareInterface
         }
 
         $data = json_decode((string) $request->getBody(), true);
-        $tool = is_array($data) ? (string) ($data['tool'] ?? '') : '';
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $tool = (string) ($data['tool'] ?? '');
 
         if ('' !== $tool && in_array($tool, $this->registry->toolNames(), true)) {
             $now = (int) $this->context->getPropertyFromAspect('date', 'timestamp', 0) ?: time();
             $this->repository->log(
                 $tool,
-                $this->sanitizeClient(is_array($data) ? (string) ($data['client'] ?? '') : ''),
+                $this->sanitizeClient((string) ($data['client'] ?? '')),
                 $now,
             );
 
