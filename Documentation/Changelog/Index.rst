@@ -17,8 +17,7 @@ this documentation may change or break between versions without notice.
 Unreleased
 ==========
 
-Planned as **0.4.0**. Aligns the runtime with the WebMCP Community Group draft
-of 2026-10-02. See :ref:`upgrading` for what to check.
+Aligns the runtime with the WebMCP Community Group draft of 2026-10-02. See :ref:`upgrading` for what to check.
 
 Changed
 -------
